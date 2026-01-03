@@ -1,0 +1,68 @@
+// Core types for the DramaWeb application
+
+export interface Drama {
+  id: string;
+  title: string;
+  description: string;
+  posterUrl: string;
+  bannerUrl?: string;
+  releaseYear: number;
+  rating: number;
+  genres: string[];
+  country: string;
+  episodes: Episode[];
+  cast: CastMember[];
+  status: 'ongoing' | 'completed';
+  totalEpisodes: number;
+}
+
+export interface Episode {
+  id: string;
+  dramaId: string;
+  episodeNumber: number;
+  title: string;
+  description?: string;
+  duration: number; // in minutes
+  releaseDate: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+}
+
+export interface CastMember {
+  id: string;
+  name: string;
+  role: string;
+  imageUrl?: string;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  avatarUrl?: string;
+  favorites: string[]; // drama IDs
+  watchHistory: WatchHistory[];
+}
+
+export interface WatchHistory {
+  dramaId: string;
+  episodeId: string;
+  watchedAt: string;
+  progress: number; // percentage watched
+}
+
+export interface Review {
+  id: string;
+  dramaId: string;
+  userId: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export interface Genre {
+  id: string;
+  name: string;
+  slug: string;
+}
+
