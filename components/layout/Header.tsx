@@ -10,6 +10,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('Khmer');
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track user authentication state
 
   const languages = ['Khmer', 'English'];
 
@@ -102,18 +103,37 @@ export default function Header() {
                 )}
               </div>
 
-              <button 
-                className="text-gray-700 hover:text-[#FF6B00] transition-colors p-1"
-                aria-label="Notifications"
-              >
-                <FiBell className="text-xl" />
-              </button>
-              <Link 
-                href="/profile" 
-                className="text-gray-700 hover:text-[#FF6B00] transition-colors p-1"
-              >
-                <FiUser className="text-xl" />
-              </Link>
+              {isLoggedIn ? (
+                <>
+                  <button 
+                    className="text-gray-700 hover:text-[#FF6B00] transition-colors p-1"
+                    aria-label="Notifications"
+                  >
+                    <FiBell className="text-xl" />
+                  </button>
+                  <Link 
+                    href="/profile" 
+                    className="text-gray-700 hover:text-[#FF6B00] transition-colors p-1"
+                  >
+                    <FiUser className="text-xl" />
+                  </Link>
+                </>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Link 
+                    href="/login" 
+                    className="text-gray-700 hover:text-[#FF6B00] transition-colors font-medium text-sm"
+                  >
+                    Sign In
+                  </Link>
+                  <Link 
+                    href="/register" 
+                    className="bg-[#FF6B00] hover:bg-[#E60000] text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
