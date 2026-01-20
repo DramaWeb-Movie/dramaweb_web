@@ -35,3 +35,5 @@ export default function DramaCardCompact({ id, title, episodes, image }: DramaCa
 }
 
 
+
+
