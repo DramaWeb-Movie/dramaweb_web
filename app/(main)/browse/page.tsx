@@ -5,12 +5,13 @@ import Loading from '@/components/shared/Loading';
 import TagFilter from '@/components/shared/TagFilter';
 import DramaCardCompact from '@/components/drama/DramaCardCompact';
 import Pagination from '@/components/shared/Pagination';
+import { FiFilter, FiGrid, FiList } from 'react-icons/fi';
 
 export default function BrowsePage() {
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 256; // Total number of pages - adjust based on your data
+  const totalPages = 256;
 
   // All available tags/genres
   const tags = [
@@ -24,7 +25,7 @@ export default function BrowsePage() {
     'Destiny', 'Twisted'
   ];
 
-  // Sample dramas data - replace with actual API data
+  // Sample dramas data
   const sampleDramas = [
     { id: '1', title: "Sonny's Competition", episodes: 50, image: '/sampleData/movieTitle/movie1.png' },
     { id: '2', title: 'Deliver Me', episodes: 55, image: '/sampleData/movieTitle/movie2.png' },
@@ -43,17 +44,14 @@ export default function BrowsePage() {
   const [dramas, setDramas] = useState(sampleDramas);
 
   useEffect(() => {
-    // Simulate filtering by tag and page
     const filterDramas = async () => {
       setLoading(true);
       await new Promise(resolve => setTimeout(resolve, 300));
-      // In real app, filter based on selectedTag and currentPage
       setDramas(sampleDramas);
       setLoading(false);
     };
 
     filterDramas();
-    // Scroll to top when page changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [selectedTag, currentPage]);
 
@@ -62,10 +60,29 @@ export default function BrowsePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-[#0F0F0F] pt-24">
+      <div className="container mx-auto px-4 md:px-8 py-8">
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white">Browse</h1>
+            <p className="text-[#808080] mt-2">Discover your next favorite movie or series</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="p-2.5 rounded-xl bg-[#1A1A1A] border border-[#333333] text-[#B3B3B3] hover:text-white hover:border-[#E31837] transition-all">
+              <FiFilter className="text-lg" />
+            </button>
+            <button className="p-2.5 rounded-xl bg-[#E31837] text-white">
+              <FiGrid className="text-lg" />
+            </button>
+            <button className="p-2.5 rounded-xl bg-[#1A1A1A] border border-[#333333] text-[#B3B3B3] hover:text-white hover:border-[#E31837] transition-all">
+              <FiList className="text-lg" />
+            </button>
+          </div>
+        </div>
+
         {/* Tag Filter Section */}
-        <div className="mb-6">
+        <div className="mb-8">
           <TagFilter 
             tags={tags} 
             selectedTag={selectedTag} 
@@ -77,7 +94,7 @@ export default function BrowsePage() {
         {loading ? (
           <Loading />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
             {dramas.map((drama) => (
               <DramaCardCompact
                 key={drama.id}
@@ -92,7 +109,7 @@ export default function BrowsePage() {
 
         {/* Pagination */}
         {!loading && dramas.length > 0 && (
-          <div className="mt-8">
+          <div className="mt-12">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}

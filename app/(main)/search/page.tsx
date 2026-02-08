@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SearchBar from '@/components/shared/SearchBar';
 import DramaGrid from '@/components/drama/DramaGrid';
 import Loading from '@/components/shared/Loading';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { Drama } from '@/types';
+import { FiSearch } from 'react-icons/fi';
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   
@@ -37,9 +38,11 @@ export default function SearchPage() {
   }, [debouncedQuery]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
       <div className="max-w-3xl mx-auto mb-12">
-        <h1 className="text-4xl font-bold mb-8 text-center">Search Dramas</h1>
+        <h1 className="text-4xl md:text-5xl font-bold mb-8 text-center">
+          <span className="gradient-text">Search</span> Content
+        </h1>
         <SearchBar 
           placeholder="Search by title, actor, or genre..." 
           onSearch={setQuery}
@@ -48,15 +51,18 @@ export default function SearchPage() {
 
       {query && (
         <div className="mb-6">
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-[#B3B3B3]">
             {loading ? (
-              'Searching...'
+              <span className="flex items-center gap-2">
+                <span className="animate-spin w-4 h-4 border-2 border-[#E31837] border-t-transparent rounded-full"></span>
+                Searching...
+              </span>
             ) : (
               <>
                 {dramas.length > 0 ? (
-                  <>Found {dramas.length} results for "{query}"</>
+                  <>Found <span className="text-white font-semibold">{dramas.length}</span> results for "<span className="text-[#E31837]">{query}</span>"</>
                 ) : (
-                  <>No results found for "{query}"</>
+                  <>No results found for "<span className="text-[#E31837]">{query}</span>"</>
                 )}
               </>
             )}
@@ -69,13 +75,28 @@ export default function SearchPage() {
       ) : query ? (
         <DramaGrid 
           dramas={dramas} 
-          emptyMessage={`No dramas found for "${query}". Try a different search term.`}
+          emptyMessage={`No content found for "${query}". Try a different search term.`}
         />
       ) : (
-        <div className="text-center py-12 text-gray-500">
-          <p className="text-xl">Start typing to search for dramas</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-20 h-20 rounded-full bg-[#1A1A1A] flex items-center justify-center mb-4">
+            <FiSearch className="text-3xl text-[#808080]" />
+          </div>
+          <p className="text-xl text-[#808080]">Start typing to search for movies & dramas</p>
         </div>
       )}
+    </>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <div className="min-h-screen bg-[#0F0F0F] pt-24">
+      <div className="container mx-auto px-4 py-8">
+        <Suspense fallback={<Loading />}>
+          <SearchContent />
+        </Suspense>
+      </div>
     </div>
   );
 }

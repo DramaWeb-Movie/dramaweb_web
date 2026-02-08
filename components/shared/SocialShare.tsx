@@ -1,5 +1,8 @@
+'use client';
+
 import { FaFacebook, FaInstagram, FaLink } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
+import { useState } from 'react';
 
 interface SocialShareProps {
   url?: string;
@@ -7,8 +10,9 @@ interface SocialShareProps {
 }
 
 export default function SocialShare({ url, title }: SocialShareProps) {
+  const [copied, setCopied] = useState(false);
   const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
-  const shareTitle = title || 'Check out this drama!';
+  const shareTitle = title || 'Check out this on ReelTime Media!';
 
   const handleShare = (platform: string) => {
     let shareLink = '';
@@ -21,7 +25,6 @@ export default function SocialShare({ url, title }: SocialShareProps) {
         shareLink = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`;
         break;
       case 'instagram':
-        // Instagram doesn't have a direct share URL, so we'll just copy the link
         handleCopyLink();
         return;
       case 'copy':
@@ -37,37 +40,42 @@ export default function SocialShare({ url, title }: SocialShareProps) {
   const handleCopyLink = () => {
     if (typeof window !== 'undefined') {
       navigator.clipboard.writeText(shareUrl);
-      alert('Link copied to clipboard!');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-gray-700 font-medium">Share:</span>
+      <span className="text-[#B3B3B3] font-medium">Share:</span>
       <button
         onClick={() => handleShare('facebook')}
-        className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition-colors"
+        className="w-10 h-10 rounded-full bg-[#1877F2] hover:opacity-90 flex items-center justify-center text-white transition-all hover:scale-110"
         aria-label="Share on Facebook"
       >
         <FaFacebook className="text-xl" />
       </button>
       <button
         onClick={() => handleShare('twitter')}
-        className="w-10 h-10 rounded-full bg-black hover:bg-gray-800 flex items-center justify-center text-white transition-colors"
+        className="w-10 h-10 rounded-full bg-[#1A1A1A] border border-[#333333] hover:border-white flex items-center justify-center text-white transition-all hover:scale-110"
         aria-label="Share on Twitter"
       >
         <FaXTwitter className="text-xl" />
       </button>
       <button
         onClick={() => handleShare('instagram')}
-        className="w-10 h-10 rounded-full bg-linear-to-br from-purple-600 via-pink-600 to-orange-600 hover:opacity-90 flex items-center justify-center text-white transition-opacity"
+        className="w-10 h-10 rounded-full bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90 flex items-center justify-center text-white transition-all hover:scale-110"
         aria-label="Share on Instagram"
       >
         <FaInstagram className="text-xl" />
       </button>
       <button
         onClick={() => handleShare('copy')}
-        className="w-10 h-10 rounded-full bg-gray-400 hover:bg-gray-500 flex items-center justify-center text-white transition-colors"
+        className={`w-10 h-10 rounded-full flex items-center justify-center text-white transition-all hover:scale-110 ${
+          copied 
+            ? 'bg-green-500' 
+            : 'bg-[#1A1A1A] border border-[#333333] hover:border-[#E31837]'
+        }`}
         aria-label="Copy link"
       >
         <FaLink className="text-lg" />

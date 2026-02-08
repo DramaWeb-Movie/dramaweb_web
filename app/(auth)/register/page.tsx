@@ -100,24 +100,12 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Create Account"
-      subtitle="Join DramaWeb and start watching amazing dramas"
+      subtitle="Join ReelTime Media and start streaming today"
     >
-      {/* Sign Up GIF */}
-      <div className="flex justify-center mb-6">
-        <Image
-          src="/images/signUpGif.gif"
-          alt="Sign Up Animation"
-          width={300}
-          height={150}
-          className="rounded-lg"
-          unoptimized
-        />
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {/* Name Input */}
         <div className="relative">
-          <FiUser className="absolute left-4 top-[46px] text-gray-400" />
+          <FiUser className="absolute left-4 top-[46px] text-[#808080]" />
           <Input
             label="Full Name"
             type="text"
@@ -132,7 +120,7 @@ export default function RegisterPage() {
 
         {/* Email Input */}
         <div className="relative">
-          <FiMail className="absolute left-4 top-[46px] text-gray-400" />
+          <FiMail className="absolute left-4 top-[46px] text-[#808080]" />
           <Input
             label="Email Address"
             type="email"
@@ -147,7 +135,7 @@ export default function RegisterPage() {
 
         {/* Password Input */}
         <div className="relative">
-          <FiLock className="absolute left-4 top-[46px] text-gray-400" />
+          <FiLock className="absolute left-4 top-[46px] text-[#808080]" />
           <Input
             label="Password"
             type="password"
@@ -162,7 +150,7 @@ export default function RegisterPage() {
 
         {/* Confirm Password Input */}
         <div className="relative">
-          <FiLock className="absolute left-4 top-[46px] text-gray-400" />
+          <FiLock className="absolute left-4 top-[46px] text-[#808080]" />
           <Input
             label="Confirm Password"
             type="password"
@@ -181,15 +169,15 @@ export default function RegisterPage() {
             type="checkbox"
             checked={agreeToTerms}
             onChange={(e) => setAgreeToTerms(e.target.checked)}
-            className="h-4 w-4 mt-1 text-[#FF6B00] focus:ring-[#FF6B00] border-gray-300 rounded"
+            className="h-4 w-4 mt-1 text-[#E31837] bg-[#252525] border-[#333333] rounded focus:ring-[#E31837] focus:ring-offset-[#1A1A1A]"
           />
-          <label className="ml-2 text-sm text-gray-700">
+          <label className="ml-3 text-sm text-[#B3B3B3]">
             I agree to the{' '}
-            <Link href="/terms" className="text-[#FF6B00] hover:text-[#E60000] font-medium">
+            <Link href="/terms" className="text-[#E31837] hover:text-[#E31837]/80 font-medium transition-colors">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/privacy" className="text-[#FF6B00] hover:text-[#E60000] font-medium">
+            <Link href="/privacy" className="text-[#E31837] hover:text-[#E31837]/80 font-medium transition-colors">
               Privacy Policy
             </Link>
           </label>
@@ -208,18 +196,18 @@ export default function RegisterPage() {
         {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
+            <div className="w-full border-t border-[#333333]"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or sign up with</span>
+            <span className="px-4 bg-[#1A1A1A] text-[#808080]">Or sign up with</span>
           </div>
         </div>
 
         {/* Social Registration Buttons */}
-        <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-[#252525] border border-[#333333] rounded-xl hover:bg-[#333333] transition-all text-white"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -239,26 +227,26 @@ export default function RegisterPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Continue with Google
+            <span className="text-sm font-medium">Google</span>
           </button>
 
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-[#252525] border border-[#333333] rounded-xl hover:bg-[#333333] transition-all text-white"
           >
             <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
-            Continue with Facebook
+            <span className="text-sm font-medium">Facebook</span>
           </button>
         </div>
 
         {/* Sign In Link */}
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-[#B3B3B3]">
           Already have an account?{' '}
           <Link
             href="/login"
-            className="font-medium text-[#FF6B00] hover:text-[#E60000]"
+            className="font-medium text-[#E31837] hover:text-[#E31837]/80 transition-colors"
           >
             Sign in
           </Link>

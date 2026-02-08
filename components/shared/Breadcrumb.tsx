@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FiChevronRight } from 'react-icons/fi';
+import { FiChevronRight, FiHome } from 'react-icons/fi';
 
 interface BreadcrumbItem {
   label: string;
@@ -12,18 +12,22 @@ interface BreadcrumbProps {
 
 export default function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <nav className="flex items-center gap-2 text-sm text-gray-600 py-4">
+    <nav className="flex items-center gap-2 text-sm text-[#808080] py-4">
+      <Link href="/" className="hover:text-[#E31837] transition-colors">
+        <FiHome className="w-4 h-4" />
+      </Link>
+      <FiChevronRight className="text-[#333333]" />
       {items.map((item, index) => (
         <div key={index} className="flex items-center gap-2">
           {item.href ? (
-            <Link href={item.href} className="hover:text-[#FF6B00] transition-colors">
+            <Link href={item.href} className="hover:text-[#E31837] transition-colors">
               {item.label}
             </Link>
           ) : (
-            <span className="text-gray-900 font-medium">{item.label}</span>
+            <span className="text-white font-medium">{item.label}</span>
           )}
           {index < items.length - 1 && (
-            <FiChevronRight className="text-gray-400" />
+            <FiChevronRight className="text-[#333333]" />
           )}
         </div>
       ))}

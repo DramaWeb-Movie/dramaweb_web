@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { FiSearch } from 'react-icons/fi';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -9,7 +10,7 @@ interface SearchBarProps {
 }
 
 export default function SearchBar({ 
-  placeholder = 'Search dramas...', 
+  placeholder = 'Search movies & dramas...', 
   onSearch 
 }: SearchBarProps) {
   const [query, setQuery] = useState('');
@@ -27,26 +28,25 @@ export default function SearchBar({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-2xl">
+    <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
       <div className="relative">
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (onSearch) onSearch(e.target.value);
+          }}
           placeholder={placeholder}
-          className="w-full px-4 py-3 pl-12 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FF6B00] focus:border-transparent"
+          className="w-full px-5 py-4 pl-14 rounded-2xl bg-[#1A1A1A] border border-[#333333] text-white placeholder-[#808080] focus:outline-none focus:ring-2 focus:ring-[#E31837] focus:border-transparent transition-all"
         />
-        <svg
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+        <FiSearch className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#808080]" />
+        <button 
+          type="submit"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 px-4 py-2 bg-gradient-to-r from-[#E31837] to-[#E31837] text-white rounded-xl font-medium hover:opacity-90 transition-opacity"
         >
-          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+          Search
+        </button>
       </div>
     </form>
   );

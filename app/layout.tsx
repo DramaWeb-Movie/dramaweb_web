@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DramaWeb - Watch Asian Dramas Online",
-  description: "Your ultimate destination for Asian dramas. Watch the latest and greatest shows from across Asia.",
+  title: "ReelTime Media - Stream Movies & Dramas",
+  description: "Your premium destination for movies and dramas. Stream the latest blockbusters and timeless classics in stunning quality.",
 };
 
 export default function RootLayout({
@@ -27,10 +27,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-[#0F0F0F] text-white`}
       >
         <Header />
-        <main className="flex-grow">
+        <main className="grow">
           {children}
         </main>
         <Footer />

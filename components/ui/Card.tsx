@@ -11,8 +11,8 @@ export default function Card({ children, className, hover = false }: CardProps) 
   return (
     <div
       className={cn(
-        'bg-white rounded-lg shadow-md overflow-hidden',
-        hover && 'transition-transform duration-200 hover:scale-105 hover:shadow-xl',
+        'bg-[#1A1A1A] rounded-xl shadow-lg overflow-hidden border border-[#333333]/50',
+        hover && 'card-hover',
         className
       )}
     >
@@ -22,7 +22,7 @@ export default function Card({ children, className, hover = false }: CardProps) 
 }
 
 export function CardHeader({ children, className }: CardProps) {
-  return <div className={cn('p-4 border-b', className)}>{children}</div>;
+  return <div className={cn('p-4 border-b border-[#333333]', className)}>{children}</div>;
 }
 
 export function CardBody({ children, className }: CardProps) {
@@ -30,6 +30,6 @@ export function CardBody({ children, className }: CardProps) {
 }
 
 export function CardFooter({ children, className }: CardProps) {
-  return <div className={cn('p-4 border-t bg-gray-50', className)}>{children}</div>;
+  return <div className={cn('p-4 border-t border-[#333333] bg-[#252525]', className)}>{children}</div>;
 }
 

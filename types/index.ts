@@ -1,5 +1,8 @@
 // Core types for the DramaWeb application
 
+/** Single part: pay per movie. Series: pay monthly subscription. */
+export type ContentType = 'movie' | 'series';
+
 export interface Drama {
   id: string;
   title: string;
@@ -14,6 +17,14 @@ export interface Drama {
   cast: CastMember[];
   status: 'ongoing' | 'completed';
   totalEpisodes: number;
+  /** movie = pay per title, series = monthly subscription */
+  contentType?: ContentType;
+  /** One-time purchase price (movies only), USD */
+  price?: number;
+  /** Rent price (movies only), USD */
+  rentPrice?: number;
+  /** Monthly subscription price (series only), USD */
+  monthlyPrice?: number;
 }
 
 export interface Episode {
