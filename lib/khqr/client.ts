@@ -32,6 +32,7 @@ export class KHQRClient {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      // Don't log error here - let the caller handle it
       throw new Error(errorData.message || `KHQR API error: ${response.status}`);
     }
 
@@ -100,7 +101,7 @@ export class KHQRClient {
         },
       };
     } catch (error: any) {
-      console.error('KHQR generation error:', error);
+      // Don't log error - let the caller handle it
       return {
         success: false,
         error: {

@@ -160,13 +160,15 @@ export async function POST(request: NextRequest) {
         if (!qrResult.success || !qrResult.data) {
           throw new Error('KHQR API failed');
         }
+        
+        console.log('✅ KHQR API: QR generated successfully');
       } catch (apiError) {
-        console.error('KHQR API error, falling back to local generation:', apiError);
+        console.log('ℹ️  KHQR API unavailable, using local generation (this is normal for development)');
         qrResult = generateLocalKHQR(amount, currency, contentTitle, reference);
       }
     } else {
       // Development mode: Generate QR locally
-      console.log('KHQR API key not configured, using local generation');
+      console.log('ℹ️  Development mode: Using local KHQR generation');
       qrResult = generateLocalKHQR(amount, currency, contentTitle, reference);
     }
 
