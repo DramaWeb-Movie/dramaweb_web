@@ -5,49 +5,54 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FiChevronLeft, FiChevronRight, FiPlay, FiInfo, FiStar, FiTrendingUp } from 'react-icons/fi';
 
+type FeaturedItem = {
+  id: string;
+  title: string;
+  episodes: number;
+  rating: number;
+  image: string;
+  description?: string;
+  genres?: string[];
+  year?: string;
+};
+
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [featuredDramas, setFeaturedDramas] = useState<FeaturedItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // All featured dramas for carousel
-  const featuredDramas = [
-    {
-      id: '1',
-      title: 'The Lost Heir: A Christmas Reckoning',
-      episodes: 52,
-      rating: 9.2,
-      image: '/sampleData/movieTitle/movie1.png',
-      description: 'On Christmas Eve, a lowly maintenance worker is dumped by his fiancée after she steals his revolutionary patent. At the company\'s holiday party, she and her new fiancé publicly mock and humiliate him. But when a powerful stranger crashes the event and reveals he\'s the worker\'s long-lost father, the two join forces to turn the tables — delivering a Christmas revenge no one will forget.',
-      genres: ['Revenge', 'Secret Identity', 'Drama'],
-      year: '2025',
-    },
-    {
-      id: '2',
-      title: 'Through Ashes Their Sorrow Awakens',
-      episodes: 56,
-      rating: 8.9,
-      image: '/sampleData/movieTitle/movie2.png',
-      description: 'Ashley, the Langstons\' biological daughter, spends years in prison after Lilith, the adopted daughter, frames her. After her release, Ashley discovers shocking family secrets and begins her journey of revenge and redemption.',
-      genres: ['Family', 'Revenge', 'Thriller'],
-      year: '2025',
-    },
-    {
-      id: '3',
-      title: 'His Love Was A Lie',
-      episodes: 57,
-      rating: 8.7,
-      image: '/sampleData/movieTitle/movie3.png',
-      description: 'After two years in a passionless marriage, Charlotte discovers her emotionally distant husband has been living a double life. As she uncovers the truth, she must decide between forgiveness and freedom.',
-      genres: ['Romance', 'Drama', 'Mystery'],
-      year: '2025',
-    }
-  ];
-
-  // Auto-slide functionality
   useEffect(() => {
+    const run = async () => {
+      try {
+        const res = await fetch('/api/movies?featured=true&limit=10');
+        const data = await res.json();
+        const items = Array.isArray(data) ? data : [];
+        setFeaturedDramas(
+          items.map((x: { id: string; title: string; episodes: number; image: string; description?: string; genres?: string[]; year?: string; rating?: number }) => ({
+            id: x.id,
+            title: x.title,
+            episodes: x.episodes,
+            image: x.image,
+            description: x.description,
+            genres: x.genres ?? [],
+            year: x.year ?? new Date().getFullYear().toString(),
+            rating: x.rating ?? 8,
+          }))
+        );
+      } catch {
+        setFeaturedDramas([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    run();
+  }, []);
+
+  useEffect(() => {
+    if (featuredDramas.length === 0) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % featuredDramas.length);
     }, 6000);
-
     return () => clearInterval(interval);
   }, [featuredDramas.length]);
 
@@ -59,35 +64,10 @@ export default function HomePage() {
     setCurrentSlide((prev) => (prev - 1 + featuredDramas.length) % featuredDramas.length);
   };
 
-  const currentDrama = featuredDramas[currentSlide];
-
-  // Sample data for different sections
-  const mostWatchedDramas = [
-    { id: '1', title: 'The Lost Heir: A Christmas Reckoning', episodes: 52, rating: 9.2, image: '/sampleData/movieTitle/movie1.png' },
-    { id: '2', title: 'Through Ashes Their Sorrow Awakens', episodes: 56, rating: 8.9, image: '/sampleData/movieTitle/movie2.png' },
-    { id: '3', title: 'His Love Was A Lie', episodes: 57, rating: 8.7, image: '/sampleData/movieTitle/movie3.png' },
-    { id: '4', title: 'The Lost Heir: A Christmas Reckoning', episodes: 52, rating: 9.2, image: '/sampleData/movieTitle/movie1.png' },
-    { id: '5', title: 'Through Ashes Their Sorrow Awakens', episodes: 56, rating: 8.9, image: '/sampleData/movieTitle/movie2.png' },
-    { id: '6', title: 'His Love Was A Lie', episodes: 57, rating: 8.7, image: '/sampleData/movieTitle/movie3.png' },
-  ];
-
-  const mustSeeDramas = [
-    { id: '6', title: 'His Love Was A Lie', episodes: 57, rating: 8.7, image: '/sampleData/movieTitle/movie3.png' },
-    { id: '7', title: 'The Lost Heir: A Christmas Reckoning', episodes: 52, rating: 9.2, image: '/sampleData/movieTitle/movie1.png' },
-    { id: '8', title: 'Through Ashes Their Sorrow Awakens', episodes: 56, rating: 8.9, image: '/sampleData/movieTitle/movie2.png' },
-    { id: '9', title: 'His Love Was A Lie', episodes: 57, rating: 8.7, image: '/sampleData/movieTitle/movie3.png' },
-    { id: '10', title: 'The Lost Heir: A Christmas Reckoning', episodes: 52, rating: 9.2, image: '/sampleData/movieTitle/movie1.png' },
-    { id: '11', title: 'Through Ashes Their Sorrow Awakens', episodes: 56, rating: 8.9, image: '/sampleData/movieTitle/movie2.png' },
-  ];
-
-  const trendingDramas = [
-    { id: '11', title: 'Through Ashes Their Sorrow Awakens', episodes: 56, rating: 8.9, image: '/sampleData/movieTitle/movie2.png' },
-    { id: '12', title: 'His Love Was A Lie', episodes: 57, rating: 8.7, image: '/sampleData/movieTitle/movie3.png' },
-    { id: '13', title: 'The Lost Heir: A Christmas Reckoning', episodes: 52, rating: 9.2, image: '/sampleData/movieTitle/movie1.png' },
-    { id: '14', title: 'Through Ashes Their Sorrow Awakens', episodes: 56, rating: 8.9, image: '/sampleData/movieTitle/movie2.png' },
-    { id: '15', title: 'His Love Was A Lie', episodes: 57, rating: 8.7, image: '/sampleData/movieTitle/movie3.png' },
-    { id: '16', title: 'The Lost Heir: A Christmas Reckoning', episodes: 52, rating: 9.2, image: '/sampleData/movieTitle/movie1.png' },
-  ];
+  const currentDrama = featuredDramas.length > 0 ? featuredDramas[currentSlide] : null;
+  const mostWatchedDramas = featuredDramas.slice(0, 6);
+  const mustSeeDramas = featuredDramas.slice(1, 7);
+  const trendingDramas = featuredDramas.slice(2, 8);
 
   // Drama Card Component
   const DramaCard = ({ drama, index }: { drama: typeof mostWatchedDramas[0], index?: number }) => (
@@ -138,6 +118,26 @@ export default function HomePage() {
     </Link>
   );
 
+  if (loading && featuredDramas.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+        <div className="animate-pulse w-12 h-12 border-2 border-[#E31837] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!currentDrama) {
+    return (
+      <div className="min-h-screen bg-[#0F0F0F] flex flex-col items-center justify-center gap-6 px-4">
+        <h1 className="text-2xl font-bold text-white">No content yet</h1>
+        <p className="text-[#808080] text-center max-w-md">
+          Add movies and series in Supabase with status &quot;published&quot; to see them here.
+        </p>
+        <Link href="/browse" className="text-[#E31837] hover:underline font-medium">Browse</Link>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0F0F0F]">
       {/* Hero Section with Full-Width Carousel */}
@@ -179,7 +179,7 @@ export default function HomePage() {
 
               {/* Genres */}
               <div className="flex flex-wrap gap-2">
-                {currentDrama.genres.map((genre) => (
+                {(currentDrama.genres ?? []).map((genre) => (
                   <span
                     key={genre}
                     className="px-4 py-1.5 bg-white/10 backdrop-blur-sm text-white text-sm rounded-full border border-white/20"

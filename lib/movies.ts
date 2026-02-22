@@ -1,0 +1,207 @@
+/**
+ * Server-side movie data from Supabase. Use from API routes or Server Components.
+ */
+import { createClient } from '@/lib/supabase/server';
+import type { Drama } from '@/types';
+import type { ContentType } from '@/types';
+
+export interface MovieRow {
+  id: string;
+  title: string;
+  description: string | null;
+  genre: string | null;
+  release_date: string | null;
+  duration: number | null;
+  thumbnail_url: string | null;
+  video_url: string | null;
+  subtitle_url: string | null;
+  status: string | null;
+  type: string | null;
+  price: number | null;
+  free_episodes_count: number | null;
+  subscription_plan_id: string | null;
+  total_episodes: number | null;
+  cast: string | null;
+  director: string | null;
+  producer: string | null;
+  country: string | null;
+  language: string | null;
+  content_rating: string | null;
+  tags: string | null;
+  trailer_url: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+/** Card shape used by Movies/Series/Browse grids and home sections */
+export interface MovieCard {
+  id: string;
+  title: string;
+  episodes: number;
+  image: string;
+  contentType: ContentType;
+  rating?: number;
+  description?: string;
+  genres?: string[];
+  year?: string;
+}
+
+/** Featured item for home hero carousel */
+export interface FeaturedMovie extends MovieCard {
+  rating: number;
+  description: string;
+  genres: string[];
+  year: string;
+}
+
+const PLACEHOLDER_IMAGE = '/sampleData/movieTitle/movie1.png';
+
+function rowToCard(row: MovieRow): MovieCard {
+  const contentType: ContentType = row.type === 'series' ? 'series' : 'movie';
+  const episodes =
+    contentType === 'series'
+      ? Math.max(1, row.total_episodes ?? 1)
+      : 1;
+  const image =
+    row.thumbnail_url?.trim() || PLACEHOLDER_IMAGE;
+  const year = row.release_date
+    ? new Date(row.release_date).getFullYear().toString()
+    : undefined;
+  const genres = row.genre
+    ? row.genre.split(',').map((g) => g.trim()).filter(Boolean)
+    : undefined;
+  return {
+    id: row.id,
+    title: row.title,
+    episodes,
+    image,
+    contentType,
+    description: row.description ?? undefined,
+    genres,
+    year,
+  };
+}
+
+function rowToFeatured(row: MovieRow): FeaturedMovie {
+  const card = rowToCard(row);
+  return {
+    ...card,
+    rating: 8.0,
+    description: row.description ?? '',
+    genres: row.genre
+      ? row.genre.split(',').map((g) => g.trim()).filter(Boolean)
+      : [],
+    year: row.release_date
+      ? new Date(row.release_date).getFullYear().toString()
+      : new Date().getFullYear().toString(),
+  };
+}
+
+function parseCast(castText: string | null): Drama['cast'] {
+  if (!castText?.trim()) return [];
+  return castText
+    .split(',')
+    .map((name, i) => ({
+      id: `c${i + 1}`,
+      name: name.trim(),
+      role: '',
+    }))
+    .filter((c) => c.name);
+}
+
+/** Fetch all published movies/series from Supabase (for listing and browse) */
+export async function getMovies(options?: {
+  type?: 'single' | 'series';
+  status?: string;
+}): Promise<MovieCard[]> {
+  const supabase = await createClient();
+  let query = supabase
+    .from('movies')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  const status = options?.status ?? 'published';
+  query = query.eq('status', status);
+  if (options?.type) {
+    query = query.eq('type', options.type);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('getMovies error:', error);
+    return [];
+  }
+  return (data as MovieRow[]).map(rowToCard);
+}
+
+/** Fetch a single movie by id for the detail page */
+export async function getMovieById(id: string): Promise<Drama | null> {
+  const supabase = await createClient();
+  const { data: row, error } = await supabase
+    .from('movies')
+    .select('*')
+    .eq('id', id)
+    .eq('status', 'published')
+    .single();
+
+  if (error || !row) {
+    if (error?.code !== 'PGRST116') console.error('getMovieById error:', error);
+    return null;
+  }
+
+  const r = row as MovieRow;
+  const contentType: ContentType = r.type === 'series' ? 'series' : 'movie';
+  const totalEpisodes =
+    contentType === 'series' ? Math.max(1, r.total_episodes ?? 1) : 1;
+  const posterUrl = r.thumbnail_url?.trim() || PLACEHOLDER_IMAGE;
+
+  let monthlyPrice: number | undefined;
+  if (r.subscription_plan_id) {
+    const { data: plan } = await supabase
+      .from('subscription_plans')
+      .select('price')
+      .eq('id', r.subscription_plan_id)
+      .single();
+    if (plan?.price != null) monthlyPrice = Number(plan.price);
+  }
+
+  const drama: Drama = {
+    id: r.id,
+    title: r.title,
+    description: r.description ?? '',
+    posterUrl,
+    bannerUrl: r.thumbnail_url?.trim() || posterUrl,
+    releaseYear: r.release_date
+      ? new Date(r.release_date).getFullYear()
+      : new Date().getFullYear(),
+    rating: 8.0,
+    genres: r.genre ? r.genre.split(',').map((g) => g.trim()).filter(Boolean) : [],
+    country: r.country ?? '',
+    episodes: [],
+    cast: parseCast(r.cast),
+    status: (r.status === 'published' ? 'completed' : 'ongoing') as 'ongoing' | 'completed',
+    totalEpisodes,
+    contentType,
+    price: r.price != null ? Number(r.price) : undefined,
+    rentPrice: undefined,
+    monthlyPrice,
+  };
+  return drama;
+}
+
+/** Fetch featured items for home hero (published, any type, limit 10) */
+export async function getFeaturedMovies(limit = 10): Promise<FeaturedMovie[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('movies')
+    .select('*')
+    .eq('status', 'published')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('getFeaturedMovies error:', error);
+    return [];
+  }
+  return (data as MovieRow[]).map(rowToFeatured);
+}

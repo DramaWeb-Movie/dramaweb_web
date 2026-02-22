@@ -5,31 +5,38 @@ import Loading from '@/components/shared/Loading';
 import TagFilter from '@/components/shared/TagFilter';
 import DramaCardCompact from '@/components/drama/DramaCardCompact';
 import Pagination from '@/components/shared/Pagination';
-import { MOVIES } from '@/lib/mock-content';
 import { FiFilter, FiGrid, FiList, FiFilm } from 'react-icons/fi';
+
+const PAGE_SIZE = 12;
+const tags = [
+  'All', 'Drama', 'Romance', 'Comedy', 'Thriller', 'Family', 'Inspirational', 'Revenge', 'Mystery',
+];
 
 export default function MoviesPage() {
   const [selectedTag, setSelectedTag] = useState<string>('all');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(MOVIES.length / 12));
-
-  const tags = [
-    'All', 'Drama', 'Romance', 'Comedy', 'Thriller', 'Family', 'Inspirational', 'Revenge', 'Mystery',
-  ];
-
-  const [items, setItems] = useState(MOVIES);
+  const [items, setItems] = useState<{ id: string; title: string; episodes: number; image: string }[]>([]);
 
   useEffect(() => {
     const run = async () => {
       setLoading(true);
-      await new Promise((r) => setTimeout(r, 200));
-      setItems(MOVIES);
-      setLoading(false);
+      try {
+        const res = await fetch('/api/movies?type=single');
+        const data = await res.json();
+        setItems(Array.isArray(data) ? data : []);
+      } catch {
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     run();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [selectedTag, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const paginatedItems = items.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const handlePageChange = (page: number) => setCurrentPage(page);
 
@@ -67,7 +74,7 @@ export default function MoviesPage() {
           <Loading />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-            {items.map((item) => (
+            {paginatedItems.map((item) => (
               <DramaCardCompact
                 key={item.id}
                 id={item.id}
