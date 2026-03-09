@@ -51,8 +51,17 @@ export async function POST(request: NextRequest) {
     // Generate unique order ID  
     const orderId = generateOrderId('RTM'); // ReelTime Media prefix
 
-    // Build success URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // Build success URL: prefer env (if not localhost), else request origin so deployment never redirects to localhost
+    const envUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+    const origin = request.headers.get('origin');
+    const proto = request.headers.get('x-forwarded-proto');
+    const host = request.headers.get('x-forwarded-host');
+    const fromRequest = origin || (proto && host ? `${proto}://${host}` : null);
+    const baseUrl =
+      (envUrl && !envUrl.includes('localhost') ? envUrl : null) ||
+      fromRequest ||
+      envUrl ||
+      'http://localhost:3000';
     const successUrl = buildSuccessUrl(baseUrl, orderId, contentId);
 
     // Create Baray payment payload (only include defined values; Baray may reject undefined)
