@@ -54,7 +54,7 @@ export interface FeaturedMovie extends MovieCard {
   year: string;
 }
 
-const PLACEHOLDER_IMAGE = '/sampleData/movieTitle/movie1.png';
+const PLACEHOLDER_IMAGE = 'https://placehold.co/400x600/1a1a1a/808080?text=No+Image';
 
 function rowToCard(row: MovieRow): MovieCard {
   const contentType: ContentType = row.type === 'series' ? 'series' : 'movie';
@@ -165,6 +165,25 @@ export async function getMovieById(id: string): Promise<Drama | null> {
     if (plan?.price != null) monthlyPrice = Number(plan.price);
   }
 
+  const baseEpisode = {
+    dramaId: r.id,
+    duration: r.duration ?? 0,
+    releaseDate: r.release_date ?? '',
+    thumbnailUrl: r.thumbnail_url ?? undefined,
+  };
+  const episodes: Drama['episodes'] =
+    contentType === 'movie'
+      ? r.video_url
+        ? [{ id: `${r.id}-1`, ...baseEpisode, episodeNumber: 1, title: r.title, videoUrl: r.video_url }]
+        : []
+      : Array.from({ length: totalEpisodes }, (_, i) => ({
+          id: `${r.id}-${i + 1}`,
+          ...baseEpisode,
+          episodeNumber: i + 1,
+          title: `Episode ${i + 1}`,
+          videoUrl: (r.video_url ?? '').trim(),
+        }));
+
   const drama: Drama = {
     id: r.id,
     title: r.title,
@@ -177,7 +196,7 @@ export async function getMovieById(id: string): Promise<Drama | null> {
     rating: 8.0,
     genres: r.genre ? r.genre.split(',').map((g) => g.trim()).filter(Boolean) : [],
     country: r.country ?? '',
-    episodes: [],
+    episodes,
     cast: parseCast(r.cast),
     status: (r.status === 'published' ? 'completed' : 'ongoing') as 'ongoing' | 'completed',
     totalEpisodes,

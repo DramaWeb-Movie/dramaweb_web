@@ -1,54 +1,34 @@
 'use client';
 
-import { useId, useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { FiArrowLeft, FiSmartphone, FiDollarSign, FiFilm, FiCheck, FiPlay, FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
+import { FiArrowLeft, FiCreditCard, FiFilm, FiAlertCircle, FiShield, FiCheck } from 'react-icons/fi';
 import Button from '@/components/ui/Button';
-import KHQRCard from '@/components/payment/KHQRCard';
 
 function PaymentContent() {
   const searchParams = useSearchParams();
-  const stableId = useId().replace(/:/g, '');
   const type = searchParams.get('type') || 'movie';
   const id = searchParams.get('id') || '';
   const amount = Math.max(0, Number(searchParams.get('amount')) || 4.99);
   const title = searchParams.get('title') || (type === 'subscription' ? 'Series subscription' : 'Movie purchase');
   const currency = (searchParams.get('currency') || 'USD').toUpperCase();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [qrData, setQrData] = useState<any>(null);
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'completed' | 'failed'>('pending');
-  const [checking, setChecking] = useState(false);
 
   const isSubscription = type === 'subscription';
   const displayAmount = currency === 'KHR' ? (amount * 4100).toFixed(0) : amount.toFixed(2);
   const paymentAmount = currency === 'KHR' ? amount * 4100 : amount;
 
-  // Generate QR code on mount
-  useEffect(() => {
-    generateQRCode();
-  }, []);
-
-  // Poll payment status every 5 seconds
-  useEffect(() => {
-    if (!qrData?.payment_id || paymentStatus !== 'pending') return;
-
-    const interval = setInterval(() => {
-      checkPaymentStatus();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [qrData, paymentStatus]);
-
-  const generateQRCode = async () => {
+  const handlePayment = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/payments/generate-qr', {
+      // Create Baray payment intent
+      const response = await fetch('/api/payments/baray', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -63,67 +43,22 @@ function PaymentContent() {
       const result = await response.json();
 
       if (!result.success) {
-        throw new Error(result.error?.message || 'Failed to generate QR code');
+        throw new Error(result.error?.message || 'Failed to create payment');
       }
 
-      setQrData(result.data);
-    } catch (err: any) {
-      console.error('QR generation error:', err);
-      setError(err.message || 'Failed to generate payment QR code');
+      // Redirect to Baray payment page
+      if (result.data?.payment_url) {
+        window.location.href = result.data.payment_url;
+      } else {
+        throw new Error('No payment URL received');
+      }
+    } catch (err: unknown) {
+      console.error('Payment error:', err);
+      setError(err instanceof Error ? err.message : 'Payment failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
-  const checkPaymentStatus = async () => {
-    if (!qrData?.payment_id || checking) return;
-
-    try {
-      setChecking(true);
-
-      const response = await fetch('/api/payments/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          paymentId: qrData.payment_id,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success && result.data?.status === 'completed') {
-        setPaymentStatus('completed');
-      }
-    } catch (err) {
-      console.error('Payment verification error:', err);
-    } finally {
-      setChecking(false);
-    }
-  };
-
-  // Show success state
-  if (paymentStatus === 'completed') {
-    return (
-      <div className="min-h-screen bg-[#0F0F0F] pt-24">
-        <div className="container mx-auto px-4 md:px-8 py-8 max-w-2xl">
-          <div className="bg-[#1A1A1A] rounded-2xl border border-[#333333]/50 p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-              <FiCheck className="text-4xl text-green-500" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Payment Successful!</h2>
-            <p className="text-[#B3B3B3] mb-6">
-              Your payment has been confirmed. You now have access to {title}.
-            </p>
-            <Link href={id ? `/drama/${id}/watch` : '/browse'}>
-              <Button className="flex items-center justify-center gap-2 mx-auto">
-                <FiPlay className="text-lg" /> {id ? 'Watch Now' : 'Browse Content'}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#0F0F0F] pt-24">
@@ -135,135 +70,137 @@ function PaymentContent() {
           <FiArrowLeft className="text-lg" /> Back
         </Link>
 
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Pay with KHQR</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Complete Your Purchase</h1>
         <p className="text-[#808080] text-sm mb-8">
-          Scan the QR code with any KHQR-supported app to complete payment.
+          Secure payment via Cambodian banks (ABA, ACLEDA, Sathapana, Wing)
         </p>
 
         <div className="space-y-6">
-          {/* Loading state */}
-          {loading && (
-            <div className="bg-[#1A1A1A] rounded-2xl border border-[#333333]/50 p-8 text-center">
-              <div className="animate-spin w-12 h-12 border-2 border-[#E31837] border-t-transparent rounded-full mx-auto mb-4" />
-              <p className="text-[#B3B3B3]">Generating payment QR code...</p>
+          {/* Order Summary */}
+          <div className="bg-[#1A1A1A] rounded-2xl border border-[#333333]/50 p-6">
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <FiFilm className="text-[#E31837]" /> Order Summary
+            </h2>
+            <div className="flex justify-between items-start gap-4">
+              <div>
+                <p className="text-white font-medium">{title}</p>
+                <p className="text-[#808080] text-sm mt-0.5">
+                  {isSubscription ? 'Monthly subscription' : 'One-time purchase'}
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-xl font-bold text-[#E31837]">
+                  {currency === 'KHR' ? `${displayAmount} KHR` : `$${displayAmount}`}
+                </p>
+              </div>
             </div>
-          )}
+          </div>
 
-          {/* Error state */}
+          {/* Payment Methods Info */}
+          <div className="bg-[#1A1A1A] rounded-2xl border border-[#333333]/50 p-6">
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <FiCreditCard className="text-[#E31837]" /> Payment Methods
+            </h2>
+            <p className="text-[#B3B3B3] text-sm mb-4">
+              You'll be redirected to our secure payment page where you can choose from:
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-[#0F0F0F] rounded-lg p-3 flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#1e3a8a] rounded flex items-center justify-center text-white text-xs font-bold">
+                  ABA
+                </div>
+                <span className="text-[#B3B3B3] text-sm">ABA Bank</span>
+              </div>
+              <div className="bg-[#0F0F0F] rounded-lg p-3 flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#00843D] rounded flex items-center justify-center text-white text-xs font-bold">
+                  ACL
+                </div>
+                <span className="text-[#B3B3B3] text-sm">ACLEDA</span>
+              </div>
+              <div className="bg-[#0F0F0F] rounded-lg p-3 flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#e11d48] rounded flex items-center justify-center text-white text-xs font-bold">
+                  SPN
+                </div>
+                <span className="text-[#B3B3B3] text-sm">Sathapana</span>
+              </div>
+              <div className="bg-[#0F0F0F] rounded-lg p-3 flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#f97316] rounded flex items-center justify-center text-white text-xs font-bold">
+                  W
+                </div>
+                <span className="text-[#B3B3B3] text-sm">Wing</span>
+              </div>
+            </div>
+            <p className="text-[#666666] text-xs">
+              Supports KHQR, Mobile Banking Deeplinks, and Card payments (via ABA)
+            </p>
+          </div>
+
+          {/* Error State */}
           {error && (
-            <div className="bg-[#1A1A1A] rounded-2xl border border-red-500/50 p-6">
-              <div className="flex items-start gap-3">
-                <FiAlertCircle className="text-red-500 text-xl shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <h3 className="text-white font-semibold mb-1">Payment Error</h3>
-                  <p className="text-[#B3B3B3] text-sm mb-4">{error}</p>
-                  <Button
-                    variant="outline"
-                    onClick={generateQRCode}
-                    className="flex items-center gap-2"
-                  >
-                    <FiRefreshCw className="text-lg" /> Try Again
-                  </Button>
-                </div>
+            <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 flex items-start gap-3">
+              <FiAlertCircle className="text-red-500 text-xl shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-white font-semibold mb-1">Payment Error</h3>
+                <p className="text-[#B3B3B3] text-sm">{error}</p>
               </div>
             </div>
           )}
 
-          {/* Order summary */}
-          {qrData && (
-            <div className="bg-[#1A1A1A] rounded-2xl border border-[#333333]/50 p-6">
-              <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <FiFilm className="text-[#E31837]" /> Order summary
-              </h2>
-              <div className="flex justify-between items-start gap-4">
-                <div>
-                  <p className="text-white font-medium">{title}</p>
-                  <p className="text-[#808080] text-sm mt-0.5">
-                    {isSubscription ? 'Monthly subscription' : 'Single movie (buy)'}
-                  </p>
+          {/* Pay Button */}
+          <Button
+            onClick={handlePayment}
+            disabled={loading}
+            className="w-full py-4 text-lg font-semibold flex items-center justify-center gap-3"
+          >
+            {loading ? (
+              <>
+                <span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                Redirecting to payment...
+              </>
+            ) : (
+              <>
+                <FiCreditCard className="text-xl" />
+                Pay {currency === 'KHR' ? `${displayAmount} KHR` : `$${displayAmount}`}
+              </>
+            )}
+          </Button>
+
+          {/* Security Note */}
+          <div className="flex items-center justify-center gap-2 text-[#666666] text-xs">
+            <FiShield className="text-green-500" />
+            <span>Secure payment processed by licensed Cambodian banks</span>
+          </div>
+
+          {/* How It Works */}
+          <div className="bg-[#1A1A1A] rounded-2xl border border-[#333333]/50 p-6">
+            <h2 className="text-lg font-bold text-white mb-4">How It Works</h2>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-3 text-[#B3B3B3] text-sm">
+                <div className="w-6 h-6 rounded-full bg-[#E31837]/20 flex items-center justify-center shrink-0">
+                  <span className="text-[#E31837] text-xs font-bold">1</span>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-xl font-bold text-[#E31837]">
-                    {currency === 'KHR' ? `${displayAmount} KHR` : `$${displayAmount}`}
-                  </p>
-                  <p className="text-[#808080] text-xs mt-0.5">Ref: {qrData.reference}</p>
+                Click "Pay" to go to the secure payment page
+              </li>
+              <li className="flex items-start gap-3 text-[#B3B3B3] text-sm">
+                <div className="w-6 h-6 rounded-full bg-[#E31837]/20 flex items-center justify-center shrink-0">
+                  <span className="text-[#E31837] text-xs font-bold">2</span>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* KHQR Payment Card - Styled like official KHQR */}
-          {qrData && (
-            <div className="bg-[#1A1A1A] rounded-2xl border border-[#333333]/50 p-8 flex flex-col items-center">
-              {/* Official KHQR-styled card */}
-              <KHQRCard
-                qrData={qrData.qr_data}
-                amount={paymentAmount}
-                currency={currency as 'USD' | 'KHR'}
-                merchantName="ReelTime Media"
-                merchantCity="Phnom Penh"
-                reference={qrData.reference}
-                imageUrl={qrData.image_url} // If KHQR API returns styled image
-              />
-              
-              {/* Payment status indicator */}
-              <div className="mt-6 flex items-center gap-2">
-                {checking && (
-                  <>
-                    <div className="animate-spin w-4 h-4 border-2 border-[#E31837] border-t-transparent rounded-full" />
-                    <span className="text-[#808080] text-sm">Checking payment status...</span>
-                  </>
-                )}
-                {!checking && paymentStatus === 'pending' && (
-                  <>
-                    <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
-                    <span className="text-[#808080] text-sm">Waiting for payment</span>
-                  </>
-                )}
-              </div>
-              
-              <Button
-                variant="outline"
-                onClick={checkPaymentStatus}
-                disabled={checking}
-                className="mt-6 w-full sm:w-auto flex items-center justify-center gap-2"
-              >
-                <FiRefreshCw className={`text-lg ${checking ? 'animate-spin' : ''}`} />
-                Check Payment Status
-              </Button>
-            </div>
-          )}
-
-          {/* Instructions */}
-          {qrData && (
-            <div className="bg-[#1A1A1A] rounded-2xl border border-[#333333]/50 p-6">
-              <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <FiSmartphone className="text-[#E31837]" /> How to pay
-              </h2>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3 text-[#B3B3B3] text-sm">
-                  <FiCheck className="text-[#E31837] shrink-0 mt-0.5" />
-                  Open your bank or e-wallet app (ABA, ACLEDA, Wing, PiPay, etc.)
-                </li>
-                <li className="flex items-start gap-3 text-[#B3B3B3] text-sm">
-                  <FiCheck className="text-[#E31837] shrink-0 mt-0.5" />
-                  Select Scan / Pay with KHQR and scan this QR code
-                </li>
-                <li className="flex items-start gap-3 text-[#B3B3B3] text-sm">
-                  <FiCheck className="text-[#E31837] shrink-0 mt-0.5" />
-                  Confirm the amount and complete the payment
-                </li>
-                <li className="flex items-start gap-3 text-[#B3B3B3] text-sm">
-                  <FiCheck className="text-[#E31837] shrink-0 mt-0.5" />
-                  Your access will be activated automatically once payment is confirmed
-                </li>
-              </ul>
-            </div>
-          )}
-
-          <p className="text-[#808080] text-xs text-center">
-            Payment powered by KHQR - Cambodia's national QR payment standard managed by the National Bank of Cambodia.
-          </p>
+                Select your preferred bank or payment method
+              </li>
+              <li className="flex items-start gap-3 text-[#B3B3B3] text-sm">
+                <div className="w-6 h-6 rounded-full bg-[#E31837]/20 flex items-center justify-center shrink-0">
+                  <span className="text-[#E31837] text-xs font-bold">3</span>
+                </div>
+                Scan QR code or complete payment in your banking app
+              </li>
+              <li className="flex items-start gap-3 text-[#B3B3B3] text-sm">
+                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                  <FiCheck className="text-green-500 text-xs" />
+                </div>
+                Get instant access to your content
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
