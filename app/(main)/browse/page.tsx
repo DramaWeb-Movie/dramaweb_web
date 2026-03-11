@@ -2,25 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Loading from '@/components/shared/Loading';
-import TagFilter from '@/components/shared/TagFilter';
 import DramaCardCompact from '@/components/drama/DramaCardCompact';
 import Pagination from '@/components/shared/Pagination';
 import { FiFilter, FiGrid, FiList } from 'react-icons/fi';
 
 const PAGE_SIZE = 12;
-const tags = [
-  'All', 'Werewolves', 'Avenge', 'Divine Tycoon', 'Love Triangle', 'Revenge', 'Paranormal', 'Sudden Wealth',
-  'Cinderella', 'Underdog Rise', 'Son-in-Law', 'Secret Identity', 'Second-chance Love', 'Comedy', 'Marriage', 'Mafia',
-  'Influencer', 'Forbidden Love', 'Uplifting Series', 'Strong Female Lead', 'Romance', 'CEO', 'Marriage Before Love', 'Fantasy',
-  'Soulmate', 'Trending', 'Concealed Identity', 'Counterattack', 'Disguise', 'Sweet Love', 'Suspense', 'Betrayal',
-  'Urban', 'Turbulent Love', 'Werewolf', 'Mystery', 'Super Power', 'Enemies to Lovers', 'Billionaire', 'Hatred',
-  'Alternative History', 'Badboy', 'Rebirth', 'Small Potato', 'Contract Lover', 'Toxic Love', 'Wealthy', 'Humor',
-  'Misunderstanding', 'True Love', 'Comeback', 'Toxic Relationship', 'Contract Marriage', 'Family', 'Time Travel', 'Bitter Love',
-  'Destiny', 'Twisted'
-];
 
 export default function BrowsePage() {
-  const [selectedTag, setSelectedTag] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [dramas, setDramas] = useState<{ id: string; title: string; episodes: number; image: string }[]>([]);
@@ -40,7 +28,7 @@ export default function BrowsePage() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     run();
-  }, [selectedTag, currentPage]);
+  }, [currentPage]);
 
   const totalPages = Math.max(1, Math.ceil(dramas.length / PAGE_SIZE));
   const paginatedDramas = dramas.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -69,15 +57,6 @@ export default function BrowsePage() {
               <FiList className="text-lg" />
             </button>
           </div>
-        </div>
-
-        {/* Tag Filter Section */}
-        <div className="mb-8">
-          <TagFilter 
-            tags={tags} 
-            selectedTag={selectedTag} 
-            onTagSelect={setSelectedTag} 
-          />
         </div>
 
         {/* Drama Grid */}

@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import DramaGrid from '@/components/drama/DramaGrid';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import type { Drama } from '@/types';
-import { FiUser, FiHeart, FiClock, FiSettings, FiEdit2, FiX } from 'react-icons/fi';
+import { FiUser, FiSettings, FiEdit2, FiX, FiFilm, FiPlay } from 'react-icons/fi';
 import { createClient } from '@/lib/supabase/client';
 
 interface Profile {
@@ -20,9 +19,7 @@ interface Profile {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'favorites' | 'history'>('favorites');
-  const [favorites, setFavorites] = useState<Drama[]>([]);
-  const [history, setHistory] = useState<Drama[]>([]);
+  const [purchases, setPurchases] = useState<Drama[]>([]);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,6 +76,50 @@ export default function ProfilePage() {
           phone: '',
           avatar_url: '',
         });
+      }
+
+      // Fetch purchased movies
+      const { data: purchaseRows } = await supabase
+        .from('purchases')
+        .select('content_id, purchased_at')
+        .eq('user_id', authUser.id)
+        .eq('content_type', 'movie');
+
+      if (purchaseRows && purchaseRows.length > 0) {
+        const contentIds = purchaseRows.map((r: { content_id: string }) => r.content_id);
+        const { data: movieRows } = await supabase
+          .from('movies')
+          .select('id, title, thumbnail_url, release_date, genre, country')
+          .in('id', contentIds);
+
+        const PLACEHOLDER = 'https://placehold.co/400x600/1a1a1a/808080?text=No+Image';
+        const purchasedDramas: Drama[] = (movieRows || []).map((row: {
+          id: string;
+          title: string;
+          thumbnail_url: string | null;
+          release_date: string | null;
+          genre: string | null;
+          country: string | null;
+        }) => ({
+          id: row.id,
+          title: row.title,
+          description: '',
+          posterUrl: row.thumbnail_url?.trim() || PLACEHOLDER,
+          releaseYear: row.release_date
+            ? new Date(row.release_date).getFullYear()
+            : new Date().getFullYear(),
+          rating: 8.0,
+          genres: row.genre
+            ? row.genre.split(',').map((g: string) => g.trim()).filter(Boolean)
+            : [],
+          country: row.country || '',
+          episodes: [],
+          cast: [],
+          status: 'completed' as const,
+          totalEpisodes: 1,
+          contentType: 'movie' as const,
+        }));
+        setPurchases(purchasedDramas);
       }
 
       setLoading(false);
@@ -190,12 +231,8 @@ export default function ProfilePage() {
               <p className="text-[#808080] mb-4">Member since {memberSince}</p>
               <div className="flex flex-wrap justify-center md:justify-start gap-4">
                 <div className="bg-[#252525] rounded-xl px-4 py-2 border border-[#333333]/50">
-                  <span className="text-[#E31837] font-bold">{favorites.length}</span>
-                  <span className="text-[#B3B3B3] ml-2">Favorites</span>
-                </div>
-                <div className="bg-[#252525] rounded-xl px-4 py-2 border border-[#333333]/50">
-                  <span className="text-[#E31837] font-bold">{history.length}</span>
-                  <span className="text-[#B3B3B3] ml-2">Watched</span>
+                  <span className="text-[#E31837] font-bold">{purchases.length}</span>
+                  <span className="text-[#B3B3B3] ml-2">Purchased</span>
                 </div>
               </div>
             </div>
@@ -206,54 +243,66 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="mb-8">
-          <div className="border-b border-[#333333]">
-            <div className="flex gap-8">
-              <button
-                onClick={() => setActiveTab('favorites')}
-                className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all ${
-                  activeTab === 'favorites'
-                    ? 'border-b-2 border-[#E31837] text-[#E31837]'
-                    : 'text-[#808080] hover:text-white'
-                }`}
-              >
-                <FiHeart />
-                Favorites ({favorites.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('history')}
-                className={`flex items-center gap-2 pb-4 px-2 font-semibold transition-all ${
-                  activeTab === 'history'
-                    ? 'border-b-2 border-[#E31837] text-[#E31837]'
-                    : 'text-[#808080] hover:text-white'
-                }`}
-              >
-                <FiClock />
-                Watch History ({history.length})
-              </button>
+        {/* My Library */}
+        <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">My Library</h2>
+              {purchases.length > 0 && (
+                <span className="text-sm text-[#808080]">
+                  {purchases.length} {purchases.length === 1 ? 'movie' : 'movies'} purchased
+                </span>
+              )}
             </div>
-          </div>
+            {purchases.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-20 h-20 rounded-full bg-[#1A1A1A] flex items-center justify-center mb-4 border border-[#333333]/50">
+                  <FiFilm className="text-3xl text-[#808080]" />
+                </div>
+                <p className="text-xl text-white font-semibold mb-2">No purchases yet</p>
+                <p className="text-[#808080] text-sm max-w-xs mb-6">
+                  Movies you buy are yours forever — find one you love and own it for life.
+                </p>
+                <a
+                  href="/movies"
+                  className="inline-flex items-center gap-2 bg-[#E31837] hover:bg-[#c0152f] text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+                >
+                  <FiPlay className="text-lg" />
+                  Browse Movies
+                </a>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                {purchases.map((drama) => (
+                  <a key={drama.id} href={`/drama/${drama.id}/watch`} className="group">
+                    <div className="bg-[#1A1A1A] border border-[#333333] rounded-2xl overflow-hidden hover:border-[#E31837]/50 transition-all duration-200">
+                      <div className="relative aspect-2/3">
+                        <img
+                          src={drama.posterUrl}
+                          alt={drama.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                          <div className="w-14 h-14 rounded-full bg-[#E31837] flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                            <FiPlay className="text-white text-xl ml-1" />
+                          </div>
+                        </div>
+                        <div className="absolute top-3 left-3 bg-[#E31837] text-white text-xs font-bold px-2 py-0.5 rounded-md">
+                          OWNED
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <h3 className="font-bold text-sm text-white line-clamp-1 group-hover:text-[#E31837] transition-colors">
+                          {drama.title}
+                        </h3>
+                        <p className="text-xs text-[#808080] mt-1">{drama.releaseYear}</p>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
         </div>
-
-        {/* Content */}
-        {activeTab === 'favorites' ? (
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-6">My Favorites</h2>
-            <DramaGrid
-              dramas={favorites}
-              emptyMessage="No favorites yet. Start adding movies and series to your favorites!"
-            />
-          </div>
-        ) : (
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-6">Watch History</h2>
-            <DramaGrid
-              dramas={history}
-              emptyMessage="No watch history yet. Start streaming to track your progress!"
-            />
-          </div>
-        )}
       </div>
 
       {/* Edit Profile Modal */}

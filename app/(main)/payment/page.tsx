@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { FiArrowLeft, FiCreditCard, FiFilm, FiAlertCircle, FiShield, FiCheck } from 'react-icons/fi';
 import Button from '@/components/ui/Button';
+import { createClient } from '@/lib/supabase/client';
 
 function PaymentContent() {
   const searchParams = useSearchParams();
@@ -17,12 +18,32 @@ function PaymentContent() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  // Require login before allowing payment
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsAuthenticated(!!user);
+      } catch (e) {
+        console.error('Auth check failed:', e);
+        setIsAuthenticated(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   const isSubscription = type === 'subscription';
   const displayAmount = currency === 'KHR' ? (amount * 4100).toFixed(0) : amount.toFixed(2);
   const paymentAmount = currency === 'KHR' ? amount * 4100 : amount;
 
   const handlePayment = async () => {
+    if (!isAuthenticated) {
+      setError('You need to sign in before making a payment.');
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -146,24 +167,51 @@ function PaymentContent() {
             </div>
           )}
 
-          {/* Pay Button */}
-          <Button
-            onClick={handlePayment}
-            disabled={loading}
-            className="w-full py-4 text-lg font-semibold flex items-center justify-center gap-3"
-          >
-            {loading ? (
-              <>
-                <span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
-                Redirecting to payment...
-              </>
-            ) : (
-              <>
-                <FiCreditCard className="text-xl" />
-                Pay {currency === 'KHR' ? `${displayAmount} KHR` : `$${displayAmount}`}
-              </>
-            )}
-          </Button>
+          {/* Auth-aware Pay Button */}
+          {isAuthenticated === null ? (
+            <div className="w-full py-4 flex items-center justify-center">
+              <span className="animate-spin w-6 h-6 border-2 border-[#E31837] border-t-transparent rounded-full" />
+            </div>
+          ) : isAuthenticated ? (
+            <Button
+              onClick={handlePayment}
+              disabled={loading}
+              className="w-full py-4 text-lg font-semibold flex items-center justify-center gap-3"
+            >
+              {loading ? (
+                <>
+                  <span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                  Redirecting to payment...
+                </>
+              ) : (
+                <>
+                  <FiCreditCard className="text-xl" />
+                  Pay {currency === 'KHR' ? `${displayAmount} KHR` : `$${displayAmount}`}
+                </>
+              )}
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <div className="bg-[#1A1A1A] border border-[#333333]/60 rounded-xl p-4 text-center">
+                <p className="text-white font-semibold mb-1">Sign in to continue</p>
+                <p className="text-[#B3B3B3] text-sm">
+                  You need an account to purchase and keep access to this content.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href={`/login?redirect=/payment?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}&amount=${encodeURIComponent(String(amount))}&title=${encodeURIComponent(title)}&currency=${encodeURIComponent(currency)}`}>
+                  <Button className="w-full sm:w-auto flex items-center justify-center gap-2">
+                    Sign in to pay
+                  </Button>
+                </Link>
+                <Link href={`/register?redirect=/payment?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}&amount=${encodeURIComponent(String(amount))}&title=${encodeURIComponent(title)}&currency=${encodeURIComponent(currency)}`}>
+                  <Button variant="outline" className="w-full sm:w-auto flex items-center justify-center gap-2">
+                    Create account
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* Security Note */}
           <div className="flex items-center justify-center gap-2 text-[#666666] text-xs">

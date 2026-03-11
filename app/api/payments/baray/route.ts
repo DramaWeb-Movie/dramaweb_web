@@ -44,9 +44,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get authenticated user (optional - for tracking)
+    // Get authenticated user (required for purchases)
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: { message: 'You must be signed in to create a payment.' } },
+        { status: 401 }
+      );
+    }
 
     // Generate unique order ID  
     const orderId = generateOrderId('RTM'); // ReelTime Media prefix
@@ -66,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     // Create Baray payment payload (only include defined values; Baray may reject undefined)
     const tracking: Record<string, string> = { product: contentTitle };
-    if (user?.id) tracking.customer_id = user.id;
+    tracking.customer_id = user.id;
     if (contentType) tracking.content_type = contentType;
     if (contentId) tracking.content_id = contentId;
 

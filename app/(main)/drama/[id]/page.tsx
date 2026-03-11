@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import type { Drama } from '@/types';
 import { FaStar } from 'react-icons/fa';
-import { FiPlay, FiHeart, FiShare2, FiCalendar, FiGlobe, FiFilm, FiClock, FiDollarSign } from 'react-icons/fi';
+import { FiPlay, FiCalendar, FiGlobe, FiFilm, FiDollarSign } from 'react-icons/fi';
 import { getMovieById } from '@/lib/movies';
 
 export default async function DramaDetailPage({
@@ -116,14 +116,6 @@ export default async function DramaDetailPage({
                     </Button>
                   </Link>
                 )}
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="secondary" className="flex items-center justify-center gap-2">
-                    <FiHeart className="text-lg" /> Favorite
-                  </Button>
-                  <Button variant="secondary" className="flex items-center justify-center gap-2">
-                    <FiShare2 className="text-lg" /> Share
-                  </Button>
-                </div>
               </div>
             </div>
           </div>

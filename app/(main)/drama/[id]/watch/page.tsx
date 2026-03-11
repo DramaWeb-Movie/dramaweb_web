@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { FiArrowLeft, FiFilm } from 'react-icons/fi';
 import { getMovieById } from '@/lib/movies';
+import WatchAccessGate from '@/components/watch/WatchAccessGate';
 
 export default async function WatchPage({
   params,
@@ -47,25 +48,14 @@ export default async function WatchPage({
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           <div className="flex-1 min-w-0">
-            <div className="rounded-2xl overflow-hidden bg-black border border-[#333333]/50 shadow-2xl">
-              {videoUrl ? (
-                <video
-                  className="w-full aspect-video"
-                  controls
-                  autoPlay
-                  playsInline
-                  preload="metadata"
-                  src={videoUrl}
-                  title={isSinglePart ? title : `${title} - Episode ${episodeNum}`}
-                >
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <div className="w-full aspect-video flex items-center justify-center bg-[#1A1A1A] text-[#808080]">
-                  Video not available
-                </div>
-              )}
-            </div>
+            <WatchAccessGate
+              contentId={id}
+              contentType={contentType === 'series' ? 'series' : 'movie'}
+              videoUrl={videoUrl}
+              title={title}
+              episodeNum={episodeNum}
+              isSinglePart={isSinglePart}
+            />
           </div>
 
           {!isSinglePart && totalEpisodes > 1 && (
