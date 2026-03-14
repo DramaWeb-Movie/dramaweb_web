@@ -7,6 +7,7 @@ import Input from '@/components/ui/Input';
 import type { Drama } from '@/types';
 import { FiUser, FiSettings, FiEdit2, FiX, FiFilm, FiPlay } from 'react-icons/fi';
 import { createClient } from '@/lib/supabase/client';
+import { useTranslations } from 'next-intl';
 
 interface Profile {
   id: string;
@@ -18,6 +19,7 @@ interface Profile {
 }
 
 export default function ProfilePage() {
+  const t = useTranslations('profile');
   const router = useRouter();
   const [purchases, setPurchases] = useState<Drama[]>([]);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
@@ -40,14 +42,12 @@ export default function ProfilePage() {
 
       setUser({ id: authUser.id, email: authUser.email });
 
-      // Fetch profile from profiles table
       let { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
         .single();
 
-      // Create profile if it doesn't exist (for users created before trigger)
       if (!profileData) {
         const fullName =
           authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User';
@@ -70,7 +70,6 @@ export default function ProfilePage() {
           avatar_url: profileData.avatar_url || '',
         });
       } else {
-        // Fallback: show auth data even without profile row
         setEditForm({
           full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || '',
           phone: '',
@@ -78,7 +77,6 @@ export default function ProfilePage() {
         });
       }
 
-      // Fetch purchased movies
       const { data: purchaseRows } = await supabase
         .from('purchases')
         .select('content_id, purchased_at')
@@ -89,13 +87,14 @@ export default function ProfilePage() {
         const contentIds = purchaseRows.map((r: { content_id: string }) => r.content_id);
         const { data: movieRows } = await supabase
           .from('movies')
-          .select('id, title, thumbnail_url, release_date, genre, country')
+          .select('id, title, title_kh, thumbnail_url, release_date, genre, country')
           .in('id', contentIds);
 
-        const PLACEHOLDER = 'https://placehold.co/400x600/1a1a1a/808080?text=No+Image';
+        const PLACEHOLDER = 'https://placehold.co/400x600/f3f4f6/9ca3af?text=No+Image';
         const purchasedDramas: Drama[] = (movieRows || []).map((row: {
           id: string;
           title: string;
+          title_kh: string | null;
           thumbnail_url: string | null;
           release_date: string | null;
           genre: string | null;
@@ -103,6 +102,7 @@ export default function ProfilePage() {
         }) => ({
           id: row.id,
           title: row.title,
+          titleKh: row.title_kh?.trim() || undefined,
           description: '',
           posterUrl: row.thumbnail_url?.trim() || PLACEHOLDER,
           releaseYear: row.release_date
@@ -178,8 +178,8 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] pt-24 flex items-center justify-center">
-        <div className="animate-pulse text-[#808080]">Loading profile...</div>
+      <div className="min-h-screen bg-gray-50 pt-24 flex items-center justify-center">
+        <div className="animate-pulse text-gray-400">{t('loading')}</div>
       </div>
     );
   }
@@ -195,125 +195,130 @@ export default function ProfilePage() {
     : new Date().getFullYear();
 
   return (
-    <div className="min-h-screen bg-[#0F0F0F] pt-24">
+    <div className="min-h-screen bg-gray-50 pt-24">
       <div className="container mx-auto px-4 md:px-8 py-8">
         {/* Profile Header */}
-        <div className="bg-[#1A1A1A] rounded-2xl p-8 mb-8 border border-[#333333]/50">
+        <div className="bg-white rounded-2xl p-8 mb-8 border border-gray-200 shadow-sm">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
             <div className="relative">
               {profile?.avatar_url ? (
                 <img
                   src={profile.avatar_url}
                   alt={displayName}
-                  className="w-28 h-28 rounded-2xl object-cover shadow-xl"
+                  className="w-28 h-28 rounded-2xl object-cover shadow-md"
                 />
               ) : (
-                <div className="w-28 h-28 bg-gradient-to-br from-[#E31837] to-[#E31837] rounded-2xl flex items-center justify-center text-white text-4xl font-bold shadow-xl">
+                <div className="w-28 h-28 bg-gradient-to-br from-[#E31837] to-[#E31837] rounded-2xl flex items-center justify-center text-white text-4xl font-bold shadow-md">
                   <FiUser className="text-5xl" />
                 </div>
               )}
               <button
                 onClick={openEditModal}
-                className="absolute -bottom-2 -right-2 w-8 h-8 bg-[#252525] border border-[#333333] rounded-lg flex items-center justify-center text-white hover:bg-[#333333] transition-colors"
+                className="absolute -bottom-2 -right-2 w-8 h-8 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
                 aria-label="Edit profile"
               >
                 <FiEdit2 className="text-sm" />
               </button>
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl font-bold text-white mb-2">{displayName}</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{displayName}</h1>
               {user.email && (
-                <p className="text-[#B3B3B3] mb-1">{user.email}</p>
+                <p className="text-gray-500 mb-1">{user.email}</p>
               )}
               {profile?.phone && (
-                <p className="text-[#B3B3B3] mb-2">{profile.phone}</p>
+                <p className="text-gray-500 mb-2">{profile.phone}</p>
               )}
-              <p className="text-[#808080] mb-4">Member since {memberSince}</p>
+              <p className="text-gray-400 mb-4">{t('memberSince', { year: memberSince })}</p>
               <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                <div className="bg-[#252525] rounded-xl px-4 py-2 border border-[#333333]/50">
+                <div className="bg-gray-100 rounded-xl px-4 py-2 border border-gray-200">
                   <span className="text-[#E31837] font-bold">{purchases.length}</span>
-                  <span className="text-[#B3B3B3] ml-2">Purchased</span>
+                  <span className="text-gray-500 ml-2">{t('purchased')}</span>
                 </div>
               </div>
             </div>
             <Button variant="secondary" className="flex items-center gap-2">
               <FiSettings className="text-lg" />
-              Settings
+              {t('settings')}
             </Button>
           </div>
         </div>
 
         {/* My Library */}
         <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">My Library</h2>
-              {purchases.length > 0 && (
-                <span className="text-sm text-[#808080]">
-                  {purchases.length} {purchases.length === 1 ? 'movie' : 'movies'} purchased
-                </span>
-              )}
-            </div>
-            {purchases.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="w-20 h-20 rounded-full bg-[#1A1A1A] flex items-center justify-center mb-4 border border-[#333333]/50">
-                  <FiFilm className="text-3xl text-[#808080]" />
-                </div>
-                <p className="text-xl text-white font-semibold mb-2">No purchases yet</p>
-                <p className="text-[#808080] text-sm max-w-xs mb-6">
-                  Movies you buy are yours forever — find one you love and own it for life.
-                </p>
-                <a
-                  href="/movies"
-                  className="inline-flex items-center gap-2 bg-[#E31837] hover:bg-[#c0152f] text-white font-semibold px-6 py-3 rounded-xl transition-colors"
-                >
-                  <FiPlay className="text-lg" />
-                  Browse Movies
-                </a>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">{t('myLibrary')}</h2>
+            {purchases.length > 0 && (
+              <span className="text-sm text-gray-400">
+                {purchases.length === 1
+                  ? t('moviesPurchased', { count: purchases.length })
+                  : t('moviesPurchasedPlural', { count: purchases.length })}
+              </span>
+            )}
+          </div>
+          {purchases.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4 border border-gray-200">
+                <FiFilm className="text-3xl text-gray-400" />
               </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                {purchases.map((drama) => (
-                  <a key={drama.id} href={`/drama/${drama.id}/watch`} className="group">
-                    <div className="bg-[#1A1A1A] border border-[#333333] rounded-2xl overflow-hidden hover:border-[#E31837]/50 transition-all duration-200">
-                      <div className="relative aspect-2/3">
-                        <img
-                          src={drama.posterUrl}
-                          alt={drama.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                          <div className="w-14 h-14 rounded-full bg-[#E31837] flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                            <FiPlay className="text-white text-xl ml-1" />
-                          </div>
-                        </div>
-                        <div className="absolute top-3 left-3 bg-[#E31837] text-white text-xs font-bold px-2 py-0.5 rounded-md">
-                          OWNED
+              <p className="text-xl text-gray-900 font-semibold mb-2">{t('noPurchases')}</p>
+              <p className="text-gray-400 text-sm max-w-xs mb-6">
+                {t('noPurchasesDesc')}
+              </p>
+              <a
+                href="/movies"
+                className="inline-flex items-center gap-2 bg-[#E31837] hover:bg-[#c0152f] text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+              >
+                <FiPlay className="text-lg" />
+                {t('browseMovies')}
+              </a>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+              {purchases.map((drama) => (
+                <a key={drama.id} href={`/drama/${drama.id}/watch`} className="group">
+                  <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-[#E31837]/50 transition-all duration-200 shadow-sm">
+                    <div className="relative aspect-2/3">
+                      <img
+                        src={drama.posterUrl}
+                        alt={drama.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <div className="w-14 h-14 rounded-full bg-[#E31837] flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                          <FiPlay className="text-white text-xl ml-1" />
                         </div>
                       </div>
-                      <div className="p-3">
-                        <h3 className="font-bold text-sm text-white line-clamp-1 group-hover:text-[#E31837] transition-colors">
-                          {drama.title}
-                        </h3>
-                        <p className="text-xs text-[#808080] mt-1">{drama.releaseYear}</p>
+                      <div className="absolute top-3 left-3 bg-[#E31837] text-white text-xs font-bold px-2 py-0.5 rounded-md">
+                        {t('owned')}
                       </div>
                     </div>
-                  </a>
-                ))}
-              </div>
-            )}
+                    <div className="p-3">
+                      <h3 className="font-bold text-sm text-gray-900 line-clamp-1 group-hover:text-[#E31837] transition-colors">
+                        {drama.title}
+                      </h3>
+                      {drama.titleKh && (
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-1" lang="km">{drama.titleKh}</p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">{drama.releaseYear}</p>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Edit Profile Modal */}
       {isEditOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="bg-[#1A1A1A] rounded-2xl border border-[#333333] w-full max-w-md p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-md p-6 shadow-xl">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">Edit Profile</h2>
+              <h2 className="text-xl font-bold text-gray-900">{t('editProfile')}</h2>
               <button
                 onClick={() => setIsEditOpen(false)}
-                className="p-2 text-[#808080] hover:text-white transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-700 transition-colors"
                 aria-label="Close"
               >
                 <FiX className="text-xl" />
@@ -324,24 +329,24 @@ export default function ProfilePage() {
             )}
             <div className="space-y-4">
               <Input
-                label="Full Name"
+                label={t('fullName')}
                 value={editForm.full_name}
                 onChange={(e) =>
                   setEditForm((prev) => ({ ...prev, full_name: e.target.value }))
                 }
-                placeholder="Your name"
+                placeholder={t('yourName')}
               />
               <Input
-                label="Phone"
+                label={t('phone')}
                 type="tel"
                 value={editForm.phone}
                 onChange={(e) =>
                   setEditForm((prev) => ({ ...prev, phone: e.target.value }))
                 }
-                placeholder="Optional"
+                placeholder={t('optional')}
               />
               <Input
-                label="Avatar URL"
+                label={t('avatarUrl')}
                 value={editForm.avatar_url}
                 onChange={(e) =>
                   setEditForm((prev) => ({ ...prev, avatar_url: e.target.value }))
@@ -356,10 +361,10 @@ export default function ProfilePage() {
                 onClick={() => setIsEditOpen(false)}
                 disabled={saving}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button className="flex-1" onClick={handleSaveProfile} disabled={saving}>
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? t('saving') : t('save')}
               </Button>
             </div>
           </div>

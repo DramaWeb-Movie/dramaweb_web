@@ -7,17 +7,17 @@ interface DramaGridProps {
   emptyMessage?: string;
 }
 
-export default function DramaGrid({ 
-  dramas, 
-  emptyMessage = 'No content found' 
+export default function DramaGrid({
+  dramas,
+  emptyMessage = 'No content found'
 }: DramaGridProps) {
   if (dramas.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-20 h-20 rounded-full bg-[#1A1A1A] flex items-center justify-center mb-4">
-          <FiFilm className="text-3xl text-[#808080]" />
+        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <FiFilm className="text-3xl text-gray-400" />
         </div>
-        <p className="text-xl text-[#808080]">{emptyMessage}</p>
+        <p className="text-xl text-gray-400">{emptyMessage}</p>
       </div>
     );
   }
@@ -30,4 +30,3 @@ export default function DramaGrid({
     </div>
   );
 }
-

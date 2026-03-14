@@ -7,12 +7,13 @@ import { FiPlay } from 'react-icons/fi';
 
 interface DramaCardProps {
   drama: Drama;
+  index?: number;
 }
 
-export default function DramaCard({ drama }: DramaCardProps) {
+export default function DramaCard({ drama, index }: DramaCardProps) {
   return (
     <Link href={`/drama/${drama.id}`} className="group">
-      <Card hover className="h-full bg-[#1A1A1A] border-[#333333] overflow-hidden">
+      <Card hover className="h-full bg-white border-gray-200 overflow-hidden shadow-sm">
         <div className="relative aspect-[2/3]">
           <Image
             src={drama.posterUrl}
@@ -21,13 +22,20 @@ export default function DramaCard({ drama }: DramaCardProps) {
             className="object-cover"
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           />
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
+          {/* Gradient Overlay on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          {/* Rank Badge (for most-watched) */}
+          {index !== undefined && (
+            <div className="absolute top-3 left-3 w-8 h-8 rounded-lg bg-gradient-to-br from-[#E31837] to-[#E31837] flex items-center justify-center">
+              <span className="text-white text-sm font-bold">{index + 1}</span>
+            </div>
+          )}
+
           {/* Rating Badge */}
-          <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm px-2.5 py-1 rounded-lg text-sm font-bold flex items-center gap-1">
-            <FaStar className="text-[#FFB800]" /> 
-            <span className="text-white">{drama.rating.toFixed(1)}</span>
+          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg text-sm font-bold flex items-center gap-1 shadow-sm">
+            <FaStar className="text-[#FFB800]" />
+            <span className="text-gray-900">{drama.rating.toFixed(1)}</span>
           </div>
 
           {/* Play Button on Hover */}
@@ -38,13 +46,16 @@ export default function DramaCard({ drama }: DramaCardProps) {
           </div>
         </div>
         <div className="p-4">
-          <h3 className="font-bold text-lg mb-2 line-clamp-1 text-white group-hover:text-[#E31837] transition-colors">{drama.title}</h3>
-          <p className="text-sm text-[#808080] mb-3">{drama.releaseYear} • {drama.country}</p>
+          <h3 className="font-bold text-lg mb-1 line-clamp-1 text-gray-900 group-hover:text-[#E31837] transition-colors">{drama.title}</h3>
+          {drama.titleKh && (
+            <p className="text-sm text-gray-500 mb-2 line-clamp-1" lang="km">{drama.titleKh}</p>
+          )}
+          <p className="text-sm text-gray-400 mb-3">{drama.releaseYear} • {drama.country}</p>
           <div className="flex flex-wrap gap-1.5">
             {drama.genres.slice(0, 2).map((genre) => (
               <span
                 key={genre}
-                className="text-xs bg-[#E31837]/20 text-[#E31837] px-2.5 py-1 rounded-full font-medium"
+                className="text-xs bg-[#E31837]/10 text-[#E31837] px-2.5 py-1 rounded-full font-medium"
               >
                 {genre}
               </span>
@@ -55,4 +66,3 @@ export default function DramaCard({ drama }: DramaCardProps) {
     </Link>
   );
 }
-

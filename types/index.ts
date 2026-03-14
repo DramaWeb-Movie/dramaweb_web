@@ -6,6 +6,8 @@ export type ContentType = 'movie' | 'series';
 export interface Drama {
   id: string;
   title: string;
+  /** Khmer title when available */
+  titleKh?: string;
   description: string;
   posterUrl: string;
   bannerUrl?: string;
@@ -25,6 +27,8 @@ export interface Drama {
   rentPrice?: number;
   /** Monthly subscription price (series only), USD */
   monthlyPrice?: number;
+  /** Number of episodes that are free to watch (auth required, no subscription needed) */
+  freeEpisodesCount?: number;
 }
 
 export interface Episode {

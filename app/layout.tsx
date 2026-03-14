@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Sans_Khmer } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getLocale } from "next-intl/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,26 +16,36 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const notoSansKhmer = Noto_Sans_Khmer({
+  variable: "--font-khmer",
+  subsets: ["khmer"],
+  weight: ["400", "500", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "ReelTime Media - Stream Movies & Dramas",
-  description: "Your premium destination for movies and dramas. Stream the latest blockbusters and timeless classics in stunning quality.",
+  description:
+    "Your premium destination for movies and dramas. Stream the latest blockbusters and timeless classics in stunning quality.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-[#0F0F0F] text-white`}
+        className={`${geistSans.variable} ${geistMono.variable} ${notoSansKhmer.variable} antialiased flex flex-col min-h-screen bg-[#F9FAFB] text-[#111827]`}
       >
-        <Header />
-        <main className="grow">
-          {children}
-        </main>
-        <Footer />
+        <NextIntlClientProvider messages={messages}>
+          <Header />
+          <main className="grow">{children}</main>
+          <Footer />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

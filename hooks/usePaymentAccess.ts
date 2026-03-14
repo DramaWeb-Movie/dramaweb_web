@@ -6,42 +6,51 @@ import { createClient } from '@/lib/supabase/client';
 interface AccessStatus {
   hasAccess: boolean;
   loading: boolean;
+  isAuthenticated: boolean;
   subscriptionActive: boolean;
   subscriptionExpiresAt?: string;
 }
 
 /**
  * usePaymentAccess Hook
- * 
- * Checks if the current user has access to specific content
- * based on purchases or active subscriptions.
- * 
- * @example
- * // Check movie access
- * const { hasAccess, loading } = usePaymentAccess('movie', 'movie-123');
- * if (loading) return <Loading />;
- * if (!hasAccess) return <PaymentButton ... />;
- * 
- * @example
- * // Check series subscription
- * const { subscriptionActive, subscriptionExpiresAt } = usePaymentAccess('series');
+ *
+ * Checks if the current user has access to specific content.
+ *
+ * - movie (free): no login required, everyone can watch
+ * - movie (paid): requires individual purchase
+ * - series (free episode): requires authentication only (isFreeEpisode = true)
+ * - series (paid episode): requires active subscription
  */
 export function usePaymentAccess(
   contentType: 'movie' | 'series',
-  contentId?: string
+  contentId?: string,
+  isFreeEpisode?: boolean,
+  isFreeMovie?: boolean
 ): AccessStatus {
   const [status, setStatus] = useState<AccessStatus>({
     hasAccess: false,
     loading: true,
+    isAuthenticated: false,
     subscriptionActive: false,
   });
 
   useEffect(() => {
     checkAccess();
-  }, [contentType, contentId]);
+  }, [contentType, contentId, isFreeEpisode, isFreeMovie]);
 
   const checkAccess = async () => {
     try {
+      // Free movie — no login required, anyone can watch
+      if (contentType === 'movie' && isFreeMovie) {
+        setStatus({
+          hasAccess: true,
+          loading: false,
+          isAuthenticated: false,
+          subscriptionActive: false,
+        });
+        return;
+      }
+
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -49,12 +58,24 @@ export function usePaymentAccess(
         setStatus({
           hasAccess: false,
           loading: false,
+          isAuthenticated: false,
           subscriptionActive: false,
         });
         return;
       }
 
-      // Check subscription for series content
+      // Free episode — only requires being logged in
+      if (contentType === 'series' && isFreeEpisode) {
+        setStatus({
+          hasAccess: true,
+          loading: false,
+          isAuthenticated: true,
+          subscriptionActive: false,
+        });
+        return;
+      }
+
+      // Paid series episode — requires active subscription
       if (contentType === 'series') {
         const { data: subscription } = await supabase
           .from('subscriptions')
@@ -67,13 +88,14 @@ export function usePaymentAccess(
         setStatus({
           hasAccess: !!subscription,
           loading: false,
+          isAuthenticated: true,
           subscriptionActive: !!subscription,
           subscriptionExpiresAt: subscription?.expires_at,
         });
         return;
       }
 
-      // Check purchase for movie content
+      // Single movie — requires individual purchase
       if (contentType === 'movie' && contentId) {
         const { data: purchase } = await supabase
           .from('purchases')
@@ -82,20 +104,11 @@ export function usePaymentAccess(
           .eq('content_id', contentId)
           .single();
 
-        // Also check if user has active subscription (gives access to all content)
-        const { data: subscription } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('status', 'active')
-          .gt('expires_at', new Date().toISOString())
-          .single();
-
         setStatus({
-          hasAccess: !!purchase || !!subscription,
+          hasAccess: !!purchase,
           loading: false,
-          subscriptionActive: !!subscription,
-          subscriptionExpiresAt: subscription?.expires_at,
+          isAuthenticated: true,
+          subscriptionActive: false,
         });
         return;
       }
@@ -103,6 +116,7 @@ export function usePaymentAccess(
       setStatus({
         hasAccess: false,
         loading: false,
+        isAuthenticated: true,
         subscriptionActive: false,
       });
     } catch (error) {
@@ -110,6 +124,7 @@ export function usePaymentAccess(
       setStatus({
         hasAccess: false,
         loading: false,
+        isAuthenticated: false,
         subscriptionActive: false,
       });
     }

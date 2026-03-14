@@ -6,7 +6,7 @@ interface TagFilterProps {
 
 export default function TagFilter({ tags, selectedTag, onTagSelect }: TagFilterProps) {
   return (
-    <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-[#333333]/50">
+    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
       <div className="flex flex-wrap gap-2">
         {tags.map((tag) => (
           <button
@@ -14,8 +14,8 @@ export default function TagFilter({ tags, selectedTag, onTagSelect }: TagFilterP
             onClick={() => onTagSelect(tag.toLowerCase())}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
               selectedTag === tag.toLowerCase()
-                ? 'bg-gradient-to-r from-[#E31837] to-[#E31837] text-white shadow-lg'
-                : 'bg-[#252525] text-[#B3B3B3] hover:bg-[#333333] hover:text-white border border-[#333333]/50'
+                ? 'bg-gradient-to-r from-[#E31837] to-[#E31837] text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 border border-gray-200'
             }`}
           >
             {tag}
@@ -25,7 +25,3 @@ export default function TagFilter({ tags, selectedTag, onTagSelect }: TagFilterP
     </div>
   );
 }
-
-
-
-

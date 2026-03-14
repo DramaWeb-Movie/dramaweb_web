@@ -24,6 +24,7 @@ export interface BarayPaymentPayload {
     }>;
   };
   custom_success_url?: string;
+  custom_cancel_url?: string;
 }
 
 export interface BarayIntentResponse {

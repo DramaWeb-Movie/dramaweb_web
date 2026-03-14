@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { FiLock, FiPlay } from 'react-icons/fi';
+import { FiLock, FiPlay, FiLogIn } from 'react-icons/fi';
 import { usePaymentAccess } from '@/hooks/usePaymentAccess';
 import Button from '@/components/ui/Button';
+import { useTranslations } from 'next-intl';
 
 interface WatchAccessGateProps {
   contentId: string;
@@ -12,6 +13,9 @@ interface WatchAccessGateProps {
   title: string;
   episodeNum?: number;
   isSinglePart: boolean;
+  freeEpisodesCount?: number;
+  /** When true, movie is free and anyone (including guests) can watch */
+  isFreeMovie?: boolean;
 }
 
 export default function WatchAccessGate({
@@ -21,15 +25,24 @@ export default function WatchAccessGate({
   title,
   episodeNum,
   isSinglePart,
+  freeEpisodesCount = 0,
+  isFreeMovie = false,
 }: WatchAccessGateProps) {
-  const { hasAccess, loading } = usePaymentAccess(
+  const t = useTranslations('watch');
+  const currentEp = episodeNum ?? 1;
+  const isFreeEpisode =
+    contentType === 'series' && freeEpisodesCount > 0 && currentEp <= freeEpisodesCount;
+
+  const { hasAccess, loading, isAuthenticated } = usePaymentAccess(
     contentType,
-    contentType === 'movie' ? contentId : undefined
+    contentType === 'movie' ? contentId : undefined,
+    isFreeEpisode,
+    isFreeMovie
   );
 
   if (loading) {
     return (
-      <div className="rounded-2xl overflow-hidden bg-[#1A1A1A] border border-[#333333]/50 shadow-2xl flex items-center justify-center aspect-video">
+      <div className="rounded-2xl overflow-hidden bg-gray-100 border border-gray-200 shadow-sm flex items-center justify-center aspect-video">
         <div className="animate-pulse w-10 h-10 border-2 border-[#E31837] border-t-transparent rounded-full" />
       </div>
     );
@@ -38,28 +51,58 @@ export default function WatchAccessGate({
   if (!hasAccess) {
     const isMovie = contentType === 'movie';
 
+    if (isFreeEpisode && !isAuthenticated) {
+      return (
+        <div className="rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm flex flex-col items-center justify-center aspect-video px-6 text-center">
+          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+            <FiLogIn className="text-green-600 text-2xl" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('signInToWatch')}</h2>
+          <p className="text-gray-500 text-sm max-w-md mb-4">
+            {t('freeEpisodeDesc', { ep: currentEp })}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
+            <Link
+              href={`/login?redirect=/drama/${contentId}/watch?ep=${currentEp}`}
+            >
+              <Button className="flex items-center gap-2" size="md">
+                <FiLogIn className="text-lg" /> {t('signInAndWatch')}
+              </Button>
+            </Link>
+            <Link
+              href={`/register?redirect=/drama/${contentId}/watch?ep=${currentEp}`}
+              className="text-sm text-[#E31837] hover:underline"
+            >
+              {t('createAccount')}
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="rounded-2xl overflow-hidden bg-[#1A1A1A] border border-[#333333]/50 shadow-2xl flex flex-col items-center justify-center aspect-video px-6 text-center">
+      <div className="rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm flex flex-col items-center justify-center aspect-video px-6 text-center">
         <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#E31837]/10 mb-4">
           <FiLock className="text-[#E31837] text-2xl" />
         </div>
-        <h2 className="text-xl font-bold text-white mb-2">
-          {isMovie ? 'Unlock this movie' : 'Subscribe to watch'}
+        <h2 className="text-xl font-bold text-gray-900 mb-2">
+          {isMovie ? t('unlockMovie') : t('subscribeToWatch')}
         </h2>
-        <p className="text-[#B3B3B3] text-sm max-w-md mb-4">
+        <p className="text-gray-500 text-sm max-w-md mb-4">
           {isMovie
-            ? 'You need to complete a one-time payment to watch this movie any time.'
-            : 'Get a subscription to unlock all episodes and keep watching without limits.'}
+            ? t('moviePayDesc')
+            : freeEpisodesCount > 0
+            ? t('episodeFreeRange', { count: freeEpisodesCount, ep: currentEp })
+            : t('subscribeDesc')}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
-          <Link href={`/drama/${contentId}`}>
+          <Link href={isMovie ? `/drama/${contentId}` : '/pricing'}>
             <Button className="flex items-center gap-2" size="md">
-              <FiPlay className="text-lg" /> Go to details &amp; pay
+              <FiPlay className="text-lg" /> {isMovie ? t('goToDetails') : t('viewPlans')}
             </Button>
           </Link>
-          <p className="text-xs text-[#808080]">
-            Once paid, you&apos;ll be able to watch {isMovie ? 'this movie' : 'this series'} any
-            time from your account.
+          <p className="text-xs text-gray-400">
+            {t('paidAccessNote', { item: isMovie ? t('thisMovie') : t('thisSeries') })}
           </p>
         </div>
       </div>
@@ -67,7 +110,7 @@ export default function WatchAccessGate({
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden bg-black border border-[#333333]/50 shadow-2xl">
+    <div className="rounded-2xl overflow-hidden bg-gray-900 border border-gray-700 shadow-xl">
       {videoUrl ? (
         <video
           className="w-full aspect-video"
@@ -77,17 +120,18 @@ export default function WatchAccessGate({
           preload="metadata"
           src={videoUrl}
           title={
-            isSinglePart || !episodeNum ? title : `${title} - Episode ${episodeNum.toString()}`
+            isSinglePart || !episodeNum
+              ? title
+              : `${title} - ${t('episode')} ${episodeNum.toString()}`
           }
         >
-          Your browser does not support the video tag.
+          {t('noVideoSupport')}
         </video>
       ) : (
-        <div className="w-full aspect-video flex items-center justify-center bg-[#1A1A1A] text-[#808080]">
-          Video not available
+        <div className="w-full aspect-video flex items-center justify-center bg-gray-100 text-gray-400">
+          {t('videoNotAvailable')}
         </div>
       )}
     </div>
   );
 }
-

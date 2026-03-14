@@ -43,27 +43,25 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
 
   return (
     <div className="flex items-center justify-center gap-2">
-      {/* Previous Button */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-300 ${
           currentPage === 1
-            ? 'bg-[#1A1A1A] text-[#808080] cursor-not-allowed border border-[#333333]/50'
-            : 'bg-[#1A1A1A] text-white hover:bg-[#E31837] border border-[#333333]/50 hover:border-[#E31837]'
+            ? 'bg-gray-100 text-gray-300 cursor-not-allowed border border-gray-200'
+            : 'bg-white text-gray-700 hover:bg-[#E31837] hover:text-white border border-gray-200 shadow-sm'
         }`}
         aria-label="Previous page"
       >
         <FiChevronLeft className="text-xl" />
       </button>
 
-      {/* Page Numbers */}
       {pages.map((page, index) => {
         if (page === '...') {
           return (
             <div
               key={`ellipsis-${index}`}
-              className="w-11 h-11 flex items-center justify-center text-[#808080]"
+              className="w-11 h-11 flex items-center justify-center text-gray-400"
             >
               ...
             </div>
@@ -76,8 +74,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
             onClick={() => onPageChange(page as number)}
             className={`w-11 h-11 flex items-center justify-center rounded-xl font-medium transition-all duration-300 ${
               currentPage === page
-                ? 'bg-gradient-to-r from-[#E31837] to-[#E31837] text-white shadow-lg'
-                : 'bg-[#1A1A1A] text-[#B3B3B3] hover:bg-[#252525] hover:text-white border border-[#333333]/50'
+                ? 'bg-gradient-to-r from-[#E31837] to-[#E31837] text-white shadow-md'
+                : 'bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 shadow-sm'
             }`}
           >
             {page}
@@ -85,14 +83,13 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
         );
       })}
 
-      {/* Next Button */}
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-300 ${
           currentPage === totalPages
-            ? 'bg-[#1A1A1A] text-[#808080] cursor-not-allowed border border-[#333333]/50'
-            : 'bg-[#1A1A1A] text-white hover:bg-[#E31837] border border-[#333333]/50 hover:border-[#E31837]'
+            ? 'bg-gray-100 text-gray-300 cursor-not-allowed border border-gray-200'
+            : 'bg-white text-gray-700 hover:bg-[#E31837] hover:text-white border border-gray-200 shadow-sm'
         }`}
         aria-label="Next page"
       >
@@ -101,6 +98,3 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
     </div>
   );
 }
-
-
-

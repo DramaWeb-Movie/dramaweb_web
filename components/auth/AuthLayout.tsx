@@ -10,9 +10,9 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-[#0F0F0F] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 opacity-30">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Subtle background accent */}
+      <div className="absolute inset-0 opacity-10">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#E31837] rounded-full blur-[150px]" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#E31837] rounded-full blur-[150px]" />
       </div>
@@ -30,32 +30,29 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
           </div>
           <div className="flex flex-col">
             <span className="text-2xl font-bold tracking-tight">
-              <span className="text-white">Reel</span>
+              <span className="text-gray-900">Reel</span>
               <span className="gradient-text">Time</span>
             </span>
-            <span className="text-[10px] text-[#808080] tracking-[0.2em] uppercase">Media</span>
+            <span className="text-[10px] text-gray-400 tracking-[0.2em] uppercase">Media</span>
           </div>
         </Link>
-        
+
         {/* Title */}
-        <h2 className="text-center text-3xl font-bold text-white">
+        <h2 className="text-center text-3xl font-bold text-gray-900">
           {title}
         </h2>
         {subtitle && (
-          <p className="mt-2 text-center text-sm text-[#B3B3B3]">
+          <p className="mt-2 text-center text-sm text-gray-500">
             {subtitle}
           </p>
         )}
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <div className="bg-[#1A1A1A] py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-[#333333]">
+        <div className="bg-white py-8 px-6 shadow-lg rounded-2xl sm:px-10 border border-gray-100">
           {children}
         </div>
       </div>
     </div>
   );
 }
-
-
-

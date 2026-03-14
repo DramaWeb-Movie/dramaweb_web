@@ -5,6 +5,7 @@ import {
   createPaymentIntent,
   generateOrderId,
   buildSuccessUrl,
+  buildFailUrl,
   BarayPaymentPayload,
 } from '@/lib/baray';
 
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
       envUrl ||
       'http://localhost:3000';
     const successUrl = buildSuccessUrl(baseUrl, orderId, contentId);
+    const failUrl = buildFailUrl(baseUrl, orderId, contentId);
 
     // Create Baray payment payload (only include defined values; Baray may reject undefined)
     const tracking: Record<string, string> = { product: contentTitle };
@@ -86,6 +88,7 @@ export async function POST(request: NextRequest) {
         items: [{ name: contentTitle, price: numericAmount }],
       },
       custom_success_url: successUrl,
+      custom_cancel_url: failUrl,
     };
 
     // Create payment intent with Baray

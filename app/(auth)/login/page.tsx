@@ -8,8 +8,10 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { FiMail, FiLock } from 'react-icons/fi';
 import { createClient } from '@/lib/supabase/client';
+import { useTranslations } from 'next-intl';
 
 function LoginForm() {
+  const t = useTranslations('auth');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
@@ -39,15 +41,15 @@ function LoginForm() {
     const newErrors: { email?: string; password?: string } = {};
 
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = t('emailInvalid');
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('passwordRequired');
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = t('passwordMinLength');
     }
 
     setErrors(newErrors);
@@ -97,8 +99,8 @@ function LoginForm() {
 
   return (
     <AuthLayout
-      title="Welcome Back"
-      subtitle="Sign in to continue streaming your favorites"
+      title={t('loginTitle')}
+      subtitle={t('loginSubtitle')}
     >
       {successMessage && (
         <div className="p-4 mb-6 rounded-xl bg-[#1a3d1a] border border-[#2d5a2d] text-[#86ef86] text-sm">
@@ -110,12 +112,12 @@ function LoginForm() {
         <div className="relative">
           <FiMail className="absolute left-4 top-[46px] text-[#808080]" />
           <Input
-            label="Email Address"
+            label={t('emailAddress')}
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="Enter your email"
+            placeholder={t('enterEmail')}
             error={errors.email}
             className="pl-11"
           />
@@ -125,12 +127,12 @@ function LoginForm() {
         <div className="relative">
           <FiLock className="absolute left-4 top-[46px] text-[#808080]" />
           <Input
-            label="Password"
+            label={t('password')}
             type="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
-            placeholder="Enter your password"
+            placeholder={t('enterPassword')}
             error={errors.password}
             className="pl-11"
           />
@@ -145,14 +147,14 @@ function LoginForm() {
               onChange={(e) => setRememberMe(e.target.checked)}
               className="h-4 w-4 text-[#E31837] bg-[#252525] border-[#333333] rounded focus:ring-[#E31837] focus:ring-offset-[#1A1A1A]"
             />
-            <span className="ml-2 text-sm text-[#B3B3B3]">Remember me</span>
+            <span className="ml-2 text-sm text-[#B3B3B3]">{t('rememberMe')}</span>
           </label>
 
           <Link
             href="/forgot-password"
             className="text-sm text-[#E31837] hover:text-[#E31837]/80 font-medium transition-colors"
           >
-            Forgot password?
+            {t('forgotPassword')}
           </Link>
         </div>
 
@@ -163,7 +165,7 @@ function LoginForm() {
           size="lg"
           disabled={loading}
         >
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? t('signingIn') : t('signIn')}
         </Button>
 
         {/* Divider */}
@@ -172,7 +174,7 @@ function LoginForm() {
             <div className="w-full border-t border-[#333333]"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-[#1A1A1A] text-[#808080]">Or continue with</span>
+            <span className="px-4 bg-[#1A1A1A] text-[#808080]">{t('orContinueWith')}</span>
           </div>
         </div>
 
@@ -216,12 +218,12 @@ function LoginForm() {
 
         {/* Sign Up Link */}
         <p className="text-center text-sm text-[#B3B3B3]">
-          Don&apos;t have an account?{' '}
+          {t('dontHaveAccount')}{' '}
           <Link
             href="/register"
             className="font-medium text-[#E31837] hover:text-[#E31837]/80 transition-colors"
           >
-            Sign up
+            {t('signUp')}
           </Link>
         </p>
       </form>
@@ -232,7 +234,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <AuthLayout title="Welcome Back" subtitle="Sign in to continue streaming your favorites">
+      <AuthLayout title="Welcome Back" subtitle="Sign in to continue streaming">
         <div className="animate-pulse space-y-6">
           <div className="h-14 bg-[#252525] rounded-xl" />
           <div className="h-14 bg-[#252525] rounded-xl" />

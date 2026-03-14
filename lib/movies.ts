@@ -8,6 +8,7 @@ import type { ContentType } from '@/types';
 export interface MovieRow {
   id: string;
   title: string;
+  title_kh: string | null;
   description: string | null;
   genre: string | null;
   release_date: string | null;
@@ -37,6 +38,7 @@ export interface MovieRow {
 export interface MovieCard {
   id: string;
   title: string;
+  titleKh?: string;
   episodes: number;
   image: string;
   contentType: ContentType;
@@ -44,6 +46,8 @@ export interface MovieCard {
   description?: string;
   genres?: string[];
   year?: string;
+  /** One-time price for movies (USD) */
+  price?: number;
 }
 
 /** Featured item for home hero carousel */
@@ -73,12 +77,14 @@ function rowToCard(row: MovieRow): MovieCard {
   return {
     id: row.id,
     title: row.title,
+    titleKh: row.title_kh?.trim() || undefined,
     episodes,
     image,
     contentType,
     description: row.description ?? undefined,
     genres,
     year,
+    ...(contentType === 'movie' && row.price != null && { price: Number(row.price) }),
   };
 }
 
@@ -171,22 +177,41 @@ export async function getMovieById(id: string): Promise<Drama | null> {
     releaseDate: r.release_date ?? '',
     thumbnailUrl: r.thumbnail_url ?? undefined,
   };
-  const episodes: Drama['episodes'] =
-    contentType === 'movie'
-      ? r.video_url
-        ? [{ id: `${r.id}-1`, ...baseEpisode, episodeNumber: 1, title: r.title, videoUrl: r.video_url }]
-        : []
-      : Array.from({ length: totalEpisodes }, (_, i) => ({
-          id: `${r.id}-${i + 1}`,
-          ...baseEpisode,
-          episodeNumber: i + 1,
-          title: `Episode ${i + 1}`,
-          videoUrl: (r.video_url ?? '').trim(),
-        }));
+
+  let episodes: Drama['episodes'];
+
+  if (contentType === 'movie') {
+    episodes = r.video_url
+      ? [{ id: `${r.id}-1`, ...baseEpisode, episodeNumber: 1, title: r.title, videoUrl: r.video_url }]
+      : [];
+  } else {
+    // Fetch per-episode video URLs from series_episodes table
+    const { data: seriesEpisodes } = await supabase
+      .from('series_episodes')
+      .select('id, episode_number, title, duration, video_url')
+      .eq('movie_id', r.id)
+      .order('episode_number', { ascending: true });
+
+    episodes = Array.from({ length: totalEpisodes }, (_, i) => {
+      const epNum = i + 1;
+      const dbEp = seriesEpisodes?.find((e) => e.episode_number === epNum);
+      return {
+        id: dbEp?.id ?? `${r.id}-${epNum}`,
+        dramaId: r.id,
+        episodeNumber: epNum,
+        title: dbEp?.title ?? `Episode ${epNum}`,
+        duration: dbEp?.duration ?? r.duration ?? 0,
+        releaseDate: r.release_date ?? '',
+        thumbnailUrl: r.thumbnail_url ?? undefined,
+        videoUrl: dbEp?.video_url?.trim() ?? '',
+      };
+    });
+  }
 
   const drama: Drama = {
     id: r.id,
     title: r.title,
+    titleKh: r.title_kh?.trim() || undefined,
     description: r.description ?? '',
     posterUrl,
     bannerUrl: r.thumbnail_url?.trim() || posterUrl,
@@ -204,6 +229,7 @@ export async function getMovieById(id: string): Promise<Drama | null> {
     price: r.price != null ? Number(r.price) : undefined,
     rentPrice: undefined,
     monthlyPrice,
+    freeEpisodesCount: r.free_episodes_count != null ? Number(r.free_episodes_count) : 0,
   };
   return drama;
 }

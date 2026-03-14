@@ -191,3 +191,18 @@ export function buildSuccessUrl(
   });
   return `${baseUrl}/payment/success?${params.toString()}`;
 }
+
+/**
+ * Build the failure/cancel redirect URL
+ */
+export function buildFailUrl(
+  baseUrl: string,
+  orderId: string,
+  contentId?: string
+): string {
+  const params = new URLSearchParams({
+    order_id: orderId,
+    ...(contentId && { id: contentId }),
+  });
+  return `${baseUrl}/payment/failed?${params.toString()}`;
+}

@@ -8,8 +8,10 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { FiMail, FiLock, FiUser } from 'react-icons/fi';
 import { createClient } from '@/lib/supabase/client';
+import { useTranslations } from 'next-intl';
 
 export default function RegisterPage() {
+  const t = useTranslations('auth');
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
@@ -45,27 +47,27 @@ export default function RegisterPage() {
     } = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('nameRequired');
     } else if (formData.name.length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+      newErrors.name = t('nameMinLength');
     }
 
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = t('emailInvalid');
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('passwordRequired');
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = t('passwordMinLength');
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
+      newErrors.confirmPassword = t('confirmPasswordRequired');
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = t('passwordsDoNotMatch');
     }
 
     setErrors(newErrors);
@@ -77,12 +79,12 @@ export default function RegisterPage() {
     setFormError(null);
 
     if (!validateForm()) {
-      setFormError('Please fix the errors below.');
+      setFormError(t('fixErrors'));
       return;
     }
 
     if (!agreeToTerms) {
-      setFormError('Please agree to the Terms of Service and Privacy Policy.');
+      setFormError(t('agreeToTermsError'));
       return;
     }
 
@@ -135,8 +137,8 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Create Account"
-      subtitle="Join ReelTime Media and start streaming today"
+      title={t('registerTitle')}
+      subtitle={t('registerSubtitle')}
     >
       {formError && (
         <div className="mb-4 p-4 rounded-xl bg-[#E31837]/20 border border-[#E31837] text-[#E31837] text-sm">
@@ -148,12 +150,12 @@ export default function RegisterPage() {
         <div className="relative">
           <FiUser className="absolute left-4 top-[46px] text-[#808080]" />
           <Input
-            label="Full Name"
+            label={t('fullName')}
             type="text"
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="Enter your full name"
+            placeholder={t('enterFullName')}
             error={errors.name}
             className="pl-11"
           />
@@ -163,12 +165,12 @@ export default function RegisterPage() {
         <div className="relative">
           <FiMail className="absolute left-4 top-[46px] text-[#808080]" />
           <Input
-            label="Email Address"
+            label={t('emailAddress')}
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="Enter your email"
+            placeholder={t('enterEmail')}
             error={errors.email}
             className="pl-11"
           />
@@ -178,12 +180,12 @@ export default function RegisterPage() {
         <div className="relative">
           <FiLock className="absolute left-4 top-[46px] text-[#808080]" />
           <Input
-            label="Password"
+            label={t('password')}
             type="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
-            placeholder="Create a password"
+            placeholder={t('createPassword')}
             error={errors.password}
             className="pl-11"
           />
@@ -193,12 +195,12 @@ export default function RegisterPage() {
         <div className="relative">
           <FiLock className="absolute left-4 top-[46px] text-[#808080]" />
           <Input
-            label="Confirm Password"
+            label={t('confirmPassword')}
             type="password"
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
-            placeholder="Confirm your password"
+            placeholder={t('confirmYourPassword')}
             error={errors.confirmPassword}
             className="pl-11"
           />
@@ -213,13 +215,13 @@ export default function RegisterPage() {
             className="h-4 w-4 mt-1 text-[#E31837] bg-[#252525] border-[#333333] rounded focus:ring-[#E31837] focus:ring-offset-[#1A1A1A]"
           />
           <label className="ml-3 text-sm text-[#B3B3B3]">
-            I agree to the{' '}
+            {t('agreeToTerms')}{' '}
             <Link href="/terms" className="text-[#E31837] hover:text-[#E31837]/80 font-medium transition-colors">
-              Terms of Service
+              {t('termsOfService')}
             </Link>{' '}
-            and{' '}
+            {t('and')}{' '}
             <Link href="/privacy" className="text-[#E31837] hover:text-[#E31837]/80 font-medium transition-colors">
-              Privacy Policy
+              {t('privacyPolicy')}
             </Link>
           </label>
         </div>
@@ -231,7 +233,7 @@ export default function RegisterPage() {
           size="lg"
           disabled={loading}
         >
-          {loading ? 'Creating Account...' : 'Create Account'}
+          {loading ? t('creatingAccount') : t('createAccount')}
         </Button>
 
         {/* Divider */}
@@ -240,7 +242,7 @@ export default function RegisterPage() {
             <div className="w-full border-t border-[#333333]"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-[#1A1A1A] text-[#808080]">Or sign up with</span>
+            <span className="px-4 bg-[#1A1A1A] text-[#808080]">{t('orSignUpWith')}</span>
           </div>
         </div>
 
@@ -284,12 +286,12 @@ export default function RegisterPage() {
 
         {/* Sign In Link */}
         <p className="text-center text-sm text-[#B3B3B3]">
-          Already have an account?{' '}
+          {t('alreadyHaveAccount')}{' '}
           <Link
             href="/login"
             className="font-medium text-[#E31837] hover:text-[#E31837]/80 transition-colors"
           >
-            Sign in
+            {t('signIn')}
           </Link>
         </p>
       </form>
