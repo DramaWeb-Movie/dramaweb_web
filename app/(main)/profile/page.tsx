@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import type { Drama } from '@/types';
-import { FiUser, FiSettings, FiEdit2, FiX, FiFilm, FiPlay } from 'react-icons/fi';
+import { FiUser, FiSettings, FiEdit2, FiX, FiFilm, FiPlay, FiCalendar, FiCreditCard } from 'react-icons/fi';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useTranslations } from 'next-intl';
 
@@ -18,10 +19,17 @@ interface Profile {
   updated_at: string;
 }
 
+interface Subscription {
+  type: string;
+  status: string;
+  expires_at: string;
+}
+
 export default function ProfilePage() {
   const t = useTranslations('profile');
   const router = useRouter();
   const [purchases, setPurchases] = useState<Drama[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,49 +85,44 @@ export default function ProfilePage() {
         });
       }
 
-      const { data: purchaseRows } = await supabase
+      const { data: subRow } = await supabase
+        .from('subscriptions')
+        .select('type, status, expires_at')
+        .eq('user_id', authUser.id)
+        .single();
+
+      if (subRow) {
+        const expiresAt = new Date(subRow.expires_at);
+        const isActive = subRow.status === 'active' && expiresAt > new Date();
+        if (isActive) {
+          setSubscription({
+            type: subRow.type,
+            status: subRow.status,
+            expires_at: subRow.expires_at,
+          });
+        }
+      }
+
+      const { data: purchaseRows, error: purchasesError } = await supabase
         .from('purchases')
         .select('content_id, purchased_at')
         .eq('user_id', authUser.id)
-        .eq('content_type', 'movie');
+        .eq('content_type', 'movie')
+        .order('purchased_at', { ascending: false });
+
+      if (purchasesError) {
+        console.error('Profile: failed to load purchases', purchasesError);
+      }
 
       if (purchaseRows && purchaseRows.length > 0) {
-        const contentIds = purchaseRows.map((r: { content_id: string }) => r.content_id);
-        const { data: movieRows } = await supabase
-          .from('movies')
-          .select('id, title, title_kh, thumbnail_url, release_date, genre, country')
-          .in('id', contentIds);
-
-        const PLACEHOLDER = 'https://placehold.co/400x600/f3f4f6/9ca3af?text=No+Image';
-        const purchasedDramas: Drama[] = (movieRows || []).map((row: {
-          id: string;
-          title: string;
-          title_kh: string | null;
-          thumbnail_url: string | null;
-          release_date: string | null;
-          genre: string | null;
-          country: string | null;
-        }) => ({
-          id: row.id,
-          title: row.title,
-          titleKh: row.title_kh?.trim() || undefined,
-          description: '',
-          posterUrl: row.thumbnail_url?.trim() || PLACEHOLDER,
-          releaseYear: row.release_date
-            ? new Date(row.release_date).getFullYear()
-            : new Date().getFullYear(),
-          rating: 8.0,
-          genres: row.genre
-            ? row.genre.split(',').map((g: string) => g.trim()).filter(Boolean)
-            : [],
-          country: row.country || '',
-          episodes: [],
-          cast: [],
-          status: 'completed' as const,
-          totalEpisodes: 1,
-          contentType: 'movie' as const,
-        }));
-        setPurchases(purchasedDramas);
+        try {
+          const res = await fetch('/api/profile/library', { credentials: 'include' });
+          const json = await res.json().catch(() => ({}));
+          const library = Array.isArray(json.library) ? json.library : [];
+          setPurchases(library);
+        } catch {
+          setPurchases([]);
+        }
       }
 
       setLoading(false);
@@ -234,6 +237,45 @@ export default function ProfilePage() {
                   <span className="text-[#E31837] font-bold">{purchases.length}</span>
                   <span className="text-gray-500 ml-2">{t('purchased')}</span>
                 </div>
+              </div>
+              {/* Subscription: plan + expiry or CTA */}
+              <div className="mt-4">
+                {subscription ? (
+                  <div className="inline-flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 rounded-xl border border-[#E31837]/20 bg-[#E31837]/5">
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#E31837] text-white">
+                        <FiCreditCard className="text-lg" />
+                      </span>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('subscription')}</p>
+                        <p className="font-semibold text-gray-900">{t('planSeries')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <FiCalendar className="text-[#E31837] shrink-0" />
+                      <span className="text-sm">
+                        {t('expiresOn', {
+                          date: new Date(subscription.expires_at).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          }),
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="inline-flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50">
+                    <p className="text-sm font-medium text-gray-700">{t('noActiveSubscription')}</p>
+                    <p className="text-xs text-gray-500">{t('noActiveSubscriptionDesc')}</p>
+                    <Link
+                      href="/pricing"
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-[#E31837] hover:text-[#c0152f] transition-colors"
+                    >
+                      {t('viewPlans')} →
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
             <Button variant="secondary" className="flex items-center gap-2">

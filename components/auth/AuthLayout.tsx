@@ -26,6 +26,7 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
               alt="ReelTime Media"
               fill
               className="object-contain"
+              sizes="56px"
             />
           </div>
           <div className="flex flex-col">

@@ -29,6 +29,8 @@ export interface Drama {
   monthlyPrice?: number;
   /** Number of episodes that are free to watch (auth required, no subscription needed) */
   freeEpisodesCount?: number;
+  /** YouTube or other trailer video URL */
+  trailerUrl?: string;
 }
 
 export interface Episode {

@@ -50,7 +50,15 @@
     "confirmPasswordRequired": "Please confirm your password",
     "passwordsDoNotMatch": "Passwords do not match",
     "fixErrors": "Please fix the errors below.",
-    "agreeToTermsError": "Please agree to the Terms of Service and Privacy Policy."
+    "agreeToTermsError": "Please agree to the Terms of Service and Privacy Policy.",
+    "phoneNumber": "Phone Number",
+    "enterPhone": "Enter your phone number",
+    "phoneRequired": "Phone number is required",
+    "phoneInvalid": "Enter a valid phone number (e.g. +855 12 345 6789)",
+    "registerWithEmail": "Use email",
+    "registerWithPhone": "Use phone",
+    "signInWithEmail": "Use email",
+    "signInWithPhone": "Use phone"
   },
   "home": {
     "featured": "Featured",
@@ -137,7 +145,13 @@
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving...",
-    "owned": "OWNED"
+    "owned": "OWNED",
+    "subscription": "Subscription",
+    "planSeries": "Series (Monthly)",
+    "expiresOn": "Expires on {date}",
+    "noActiveSubscription": "No active subscription",
+    "noActiveSubscriptionDesc": "Subscribe to unlock all series and watch without limits.",
+    "viewPlans": "View plans"
   },
   "watch": {
     "signInToWatch": "Sign in to watch for free",
@@ -156,7 +170,8 @@
     "thisSeries": "this series",
     "noVideoSupport": "Your browser does not support the video tag.",
     "videoNotAvailable": "Video not available",
-    "episode": "Episode"
+    "episode": "Episode",
+    "watchNow": "Watch Now"
   },
   "payment": {
     "confirming": "Confirming Payment...",

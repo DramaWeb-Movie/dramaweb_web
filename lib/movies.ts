@@ -1,7 +1,8 @@
 /**
  * Server-side movie data from Supabase. Use from API routes or Server Components.
  */
-import { createClient } from '@/lib/supabase/server';
+import { unstable_cache } from 'next/cache';
+import { createAnonClient, createClient } from '@/lib/supabase/server';
 import type { Drama } from '@/types';
 import type { ContentType } from '@/types';
 
@@ -115,29 +116,34 @@ function parseCast(castText: string | null): Drama['cast'] {
     .filter((c) => c.name);
 }
 
-/** Fetch all published movies/series from Supabase (for listing and browse) */
+/** Fetch all published movies/series from Supabase (for listing and browse). Cached 60s. */
 export async function getMovies(options?: {
   type?: 'single' | 'series';
   status?: string;
 }): Promise<MovieCard[]> {
-  const supabase = await createClient();
-  let query = supabase
-    .from('movies')
-    .select('*')
-    .order('created_at', { ascending: false });
-
   const status = options?.status ?? 'published';
-  query = query.eq('status', status);
-  if (options?.type) {
-    query = query.eq('type', options.type);
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    console.error('getMovies error:', error);
-    return [];
-  }
-  return (data as MovieRow[]).map(rowToCard);
+  const type = options?.type ?? 'all';
+  return unstable_cache(
+    async () => {
+      const supabase = createAnonClient();
+      let query = supabase
+        .from('movies')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .eq('status', status);
+      if (type !== 'all') {
+        query = query.eq('type', type);
+      }
+      const { data, error } = await query;
+      if (error) {
+        console.error('getMovies error:', error);
+        return [];
+      }
+      return (data as MovieRow[]).map(rowToCard);
+    },
+    ['movies', type, status],
+    { revalidate: 60 }
+  )();
 }
 
 /** Fetch a single movie by id for the detail page */
@@ -230,23 +236,43 @@ export async function getMovieById(id: string): Promise<Drama | null> {
     rentPrice: undefined,
     monthlyPrice,
     freeEpisodesCount: r.free_episodes_count != null ? Number(r.free_episodes_count) : 0,
+    trailerUrl: r.trailer_url?.trim() || undefined,
   };
   return drama;
 }
 
-/** Fetch featured items for home hero (published, any type, limit 10) */
+/** Fetch featured items for home hero (published, any type, limit 10). Cached 60s. */
 export async function getFeaturedMovies(limit = 10): Promise<FeaturedMovie[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('movies')
-    .select('*')
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  return unstable_cache(
+    async () => {
+      const supabase = createAnonClient();
+      const { data, error } = await supabase
+        .from('movies')
+        .select('*')
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
-  if (error) {
-    console.error('getFeaturedMovies error:', error);
-    return [];
-  }
-  return (data as MovieRow[]).map(rowToFeatured);
+      if (error) {
+        console.error('getFeaturedMovies error:', error);
+        return [];
+      }
+      return (data as MovieRow[]).map(rowToFeatured);
+    },
+    ['featured-movies', String(limit)],
+    { revalidate: 60 }
+  )();
+}
+
+/** Server-only: get current user's purchased movie IDs (for Watch vs Buy). Not cached. */
+export async function getPurchasedMovieIdsForCurrentUser(): Promise<Set<string>> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Set();
+  const { data: rows } = await supabase
+    .from('purchases')
+    .select('content_id')
+    .eq('user_id', user.id)
+    .eq('content_type', 'movie');
+  return new Set((rows || []).map((r: { content_id: string }) => r.content_id));
 }

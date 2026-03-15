@@ -24,18 +24,19 @@ export default function DramaCardCompact({ id, title, titleKh, episodes, image, 
   const tMovies = useTranslations('movies');
   const watchHref = episodes > 1 ? `/drama/${id}/watch?ep=1` : `/drama/${id}/watch`;
 
+  const isFreeMovie = showMovieButton && (price == null || price === 0);
   const showButton = showWatchButton || showMovieButton;
-  const isWatch = showWatchButton || (showMovieButton && hasPurchased);
+  const isWatch = showWatchButton || (showMovieButton && (hasPurchased || isFreeMovie));
   const buttonHref = isWatch ? watchHref : `/drama/${id}`;
   const buttonLabel = isWatch
     ? t('watchNow')
     : (price != null && price > 0 ? tMovies('priceFormat', { value: price.toFixed(2) }) : tMovies('payPerMovie'));
 
   return (
-    <div className="group block">
-      <div className="bg-white rounded-xl overflow-hidden card-hover border border-gray-200 shadow-sm">
-        <Link href={`/drama/${id}`} className="block">
-          <div className="relative aspect-[2/3]">
+    <div className="group block h-full">
+      <div className="bg-white rounded-xl overflow-hidden card-hover border border-gray-200 shadow-sm flex flex-col h-full">
+        <Link href={`/drama/${id}`} className="flex-1 flex flex-col min-h-0">
+          <div className="relative aspect-[2/3] shrink-0">
             <Image
               src={image}
               alt={title}
@@ -45,6 +46,13 @@ export default function DramaCardCompact({ id, title, titleKh, episodes, image, 
             />
             {/* Gradient Overlay on hover */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+            {/* Free badge (movies only) */}
+            {isFreeMovie && (
+              <div className="absolute top-3 right-3 bg-[#FFB800] text-gray-900 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide shadow-sm">
+                Free
+              </div>
+            )}
 
             {/* Episode Badge */}
             <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5">
@@ -58,17 +66,17 @@ export default function DramaCardCompact({ id, title, titleKh, episodes, image, 
               </div>
             </div>
           </div>
-          <div className="p-3">
+          <div className="p-3 min-h-[4.5rem] flex flex-col shrink-0">
             <h3 className="font-semibold text-sm line-clamp-2 text-gray-900 group-hover:text-[#E31837] transition-colors">
               {title}
             </h3>
-            {titleKh && (
-              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2" lang="km">{titleKh}</p>
-            )}
+            <p className={`text-xs text-gray-500 mt-0.5 line-clamp-2 ${!titleKh ? 'invisible' : ''}`} lang="km" aria-hidden={!titleKh}>
+              {titleKh || '\u00A0'}
+            </p>
           </div>
         </Link>
         {showButton && (
-          <div className="px-3 pb-3">
+          <div className="px-3 pb-3 shrink-0">
             <Link
               href={buttonHref}
               className="mt-2 inline-flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-[#E31837] text-white text-xs font-semibold hover:bg-[#c0152f] transition-colors"

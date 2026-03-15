@@ -50,7 +50,15 @@
     "confirmPasswordRequired": "សូមបញ្ជាក់ពាក្យសម្ងាត់របស់អ្នក",
     "passwordsDoNotMatch": "ពាក្យសម្ងាត់មិនត្រូវគ្នា",
     "fixErrors": "សូមកែតម្រូវកំហុសខាងក្រោម។",
-    "agreeToTermsError": "សូមយល់ព្រមទទួលស្គាល់លក្ខខណ្ឌ និងគោលការណ៍ភាពឯកជន។"
+    "agreeToTermsError": "សូមយល់ព្រមទទួលស្គាល់លក្ខខណ្ឌ និងគោលការណ៍ភាពឯកជន។",
+    "phoneNumber": "លេខទូរស័ព្ទ",
+    "enterPhone": "បញ្ចូលលេខទូរស័ព្ទរបស់អ្នក",
+    "phoneRequired": "ត្រូវការលេខទូរស័ព្ទ",
+    "phoneInvalid": "បញ្ចូលលេខទូរស័ព្ទឲ្យបានត្រឹមត្រូវ (ឧ. +855 12 345 6789)",
+    "registerWithEmail": "ប្រើអ៊ីមែល",
+    "registerWithPhone": "ប្រើលេខទូរស័ព្ទ",
+    "signInWithEmail": "ប្រើអ៊ីមែល",
+    "signInWithPhone": "ប្រើលេខទូរស័ព្ទ"
   },
   "home": {
     "featured": "ពិសេស",
@@ -137,7 +145,13 @@
     "cancel": "បោះបង់",
     "save": "រក្សាទុក",
     "saving": "កំពុងរក្សាទុក...",
-    "owned": "បានទិញ"
+    "owned": "បានទិញ",
+    "subscription": "ការជាវ",
+    "planSeries": "ស៊េរី (ប្រចាំខែ)",
+    "expiresOn": "ផុតកំណត់នៅ {date}",
+    "noActiveSubscription": "គ្មានការជាវសកម្ម",
+    "noActiveSubscriptionDesc": "ជាវដើម្បីដោះសោស៊េរីទាំងអស់ និងមើលដោយគ្មានដែនកំណត់។",
+    "viewPlans": "មើលផែនការ"
   },
   "watch": {
     "signInToWatch": "ចូលដើម្បីមើលដោយឥតគិតថ្លៃ",
@@ -145,9 +159,9 @@
     "signInAndWatch": "ចូល & មើលដោយឥតគិតថ្លៃ",
     "createAccount": "បង្កើតគណនី",
     "unlockMovie": "ដោះសោភាពយន្តនេះ",
-    "subscribeToWatch": "ជាវដើម្បីមើល",
+    "subscribeToWatch": "ដើម្បីមើលសូមចូលជាសមាជិករបស់ពួកយើង",
     "moviePayDesc": "អ្នកត្រូវការបង់ប្រាក់ម្ដងដើម្បីមើលភាពយន្តនេះគ្រប់ពេល។",
-    "episodeFreeRange": "វគ្គ ១–{count} ឥតគិតថ្លៃ។ វគ្គ {ep} ត្រូវការការជាវ។",
+    "episodeFreeRange": "វគ្គ {ep} ត្រូវការអ្នកជាសមាជិក។",
     "subscribeDesc": "ជាវដើម្បីដោះសោវគ្គទាំងអស់ ហើយបន្តមើលដោយគ្មានដែនកំណត់។",
     "goToDetails": "ចូលទំព័រព័ត៌មាន & បង់ប្រាក់",
     "viewPlans": "មើលផែនការជាវ",

@@ -1,0 +1,120 @@
+/**
+ * Cloudflare R2: stream via S3 API so the browser never hits r2.cloudflarestorage.com
+ * (avoids ERR_SSL_VERSION_OR_CIPHER_MISMATCH in some environments).
+ * Requires: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_HOST
+ */
+
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
+import https from 'https';
+import { Readable } from 'stream';
+
+/** HTTPS agent that enforces TLS 1.2+ to avoid SSL handshake failure with Cloudflare R2. */
+const r2HttpsAgent = new https.Agent({
+  minVersion: 'TLSv1.2',
+  keepAlive: true,
+});
+
+function getR2Client(): S3Client | null {
+  const accountId = process.env.R2_ACCOUNT_ID?.trim();
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
+  if (!accountId || !accessKeyId || !secretAccessKey) return null;
+
+  return new S3Client({
+    region: 'auto',
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+    forcePathStyle: true,
+    requestHandler: new NodeHttpHandler({
+      httpsAgent: r2HttpsAgent,
+    }),
+  });
+}
+
+/** Parse bucket key from a stored video URL if it matches R2_PUBLIC_HOST. */
+function getR2BucketAndKey(videoUrl: string): { bucket: string; key: string } | null {
+  const bucket = process.env.R2_BUCKET_NAME?.trim();
+  const publicHost = process.env.R2_PUBLIC_HOST?.trim();
+  if (!bucket || !publicHost || !videoUrl?.trim()) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(videoUrl);
+  } catch {
+    return null;
+  }
+
+  const hostToMatch = new URL(publicHost).host;
+  if (parsed.host !== hostToMatch) return null;
+
+  const key = parsed.pathname.replace(/^\//, '');
+  if (!key) return null;
+
+  return { bucket, key };
+}
+
+export type R2StreamResult = {
+  body: ReadableStream;
+  contentType?: string;
+  contentLength?: number;
+  contentRange?: string;
+  acceptRanges?: string;
+  statusCode: number;
+};
+
+/**
+ * Stream from R2 via S3 GetObject (server-side). Browser only talks to your app domain.
+ * Returns null if URL is not from our R2 bucket or R2 is not configured.
+ */
+export async function streamFromR2(
+  videoUrl: string,
+  rangeHeader: string | null
+): Promise<R2StreamResult | null> {
+  const bucketKey = getR2BucketAndKey(videoUrl);
+  if (!bucketKey) return null;
+
+  const client = getR2Client();
+  if (!client) return null;
+
+  const { bucket, key } = bucketKey;
+
+  try {
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      ...(rangeHeader ? { Range: rangeHeader } : {}),
+    });
+    const response = await client.send(command);
+    const body = response.Body;
+    if (!body) return null;
+
+    // AWS SDK in Node returns a Node Readable; Response() expects a Web ReadableStream.
+    const webBody =
+      typeof (body as ReadableStream).getReader === 'function'
+        ? (body as ReadableStream)
+        : (Readable.toWeb(body as NodeJS.ReadableStream) as ReadableStream);
+
+    return {
+      body: webBody,
+      contentType: response.ContentType ?? undefined,
+      contentLength: response.ContentLength ?? undefined,
+      contentRange: response.ContentRange ?? undefined,
+      acceptRanges: response.AcceptRanges ?? undefined,
+      statusCode: response.$metadata.httpStatusCode ?? 200,
+    };
+  } catch (err) {
+    console.error('R2 stream error:', err);
+    return null;
+  }
+}
+
+/**
+ * True if the stored video URL is from our R2 bucket (so we can stream via R2 instead of public URL).
+ */
+export function isR2Url(videoUrl: string): boolean {
+  return getR2BucketAndKey(videoUrl) !== null;
+}

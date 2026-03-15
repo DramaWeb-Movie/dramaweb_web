@@ -29,3 +29,20 @@ export async function createClient() {
     }
   );
 }
+
+/**
+ * Supabase client that does NOT use cookies(). Safe to use inside unstable_cache()
+ * and other cached scopes. Use for public data only (no auth/session).
+ */
+export function createAnonClient() {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    supabaseKey!,
+    {
+      cookies: {
+        getAll: () => [],
+        setAll: () => {},
+      },
+    }
+  );
+}

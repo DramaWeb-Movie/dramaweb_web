@@ -9,7 +9,8 @@ import { useTranslations } from 'next-intl';
 interface WatchAccessGateProps {
   contentId: string;
   contentType: 'movie' | 'series';
-  videoUrl: string;
+  /** @deprecated Not used; video is streamed via /api/watch/stream to avoid exposing URLs */
+  videoUrl?: string;
   title: string;
   episodeNum?: number;
   isSinglePart: boolean;
@@ -109,29 +110,26 @@ export default function WatchAccessGate({
     );
   }
 
+  // Stream URL: server verifies access and proxies video so the real URL is never exposed
+  const streamUrl = `/api/watch/stream?contentId=${encodeURIComponent(contentId)}&ep=${currentEp}`;
+
   return (
     <div className="rounded-2xl overflow-hidden bg-gray-900 border border-gray-700 shadow-xl">
-      {videoUrl ? (
-        <video
-          className="w-full aspect-video"
-          controls
-          autoPlay
-          playsInline
-          preload="metadata"
-          src={videoUrl}
-          title={
-            isSinglePart || !episodeNum
-              ? title
-              : `${title} - ${t('episode')} ${episodeNum.toString()}`
-          }
-        >
-          {t('noVideoSupport')}
-        </video>
-      ) : (
-        <div className="w-full aspect-video flex items-center justify-center bg-gray-100 text-gray-400">
-          {t('videoNotAvailable')}
-        </div>
-      )}
+      <video
+        className="w-full aspect-video"
+        controls
+        autoPlay
+        playsInline
+        preload="metadata"
+        src={streamUrl}
+        title={
+          isSinglePart || !episodeNum
+            ? title
+            : `${title} - ${t('episode')} ${episodeNum.toString()}`
+        }
+      >
+        {t('noVideoSupport')}
+      </video>
     </div>
   );
 }

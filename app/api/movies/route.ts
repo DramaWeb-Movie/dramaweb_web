@@ -1,5 +1,7 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getMovies, getFeaturedMovies } from '@/lib/movies';
+
+const LIST_CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=120';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -10,16 +12,20 @@ export async function GET(request: NextRequest) {
     if (featured) {
       const limit = Math.min(Number(searchParams.get('limit')) || 10, 20);
       const items = await getFeaturedMovies(limit);
-      return Response.json(items);
+      return NextResponse.json(items, {
+        headers: { 'Cache-Control': LIST_CACHE_CONTROL },
+      });
     }
 
     const items = await getMovies({
       type: type ?? undefined,
       status: 'published',
     });
-    return Response.json(items);
+    return NextResponse.json(items, {
+      headers: { 'Cache-Control': LIST_CACHE_CONTROL },
+    });
   } catch (e) {
     console.error('GET /api/movies error:', e);
-    return Response.json({ error: 'Failed to fetch movies' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch movies' }, { status: 500 });
   }
 }
