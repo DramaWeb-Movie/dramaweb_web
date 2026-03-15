@@ -93,10 +93,12 @@ export async function streamFromR2(
     if (!body) return null;
 
     // AWS SDK in Node returns a Node Readable; Response() expects a Web ReadableStream.
-    const webBody =
-      typeof (body as ReadableStream).getReader === 'function'
-        ? (body as ReadableStream)
-        : (Readable.toWeb(body as NodeJS.ReadableStream) as ReadableStream);
+    let webBody: ReadableStream;
+    if (typeof (body as ReadableStream).getReader === 'function') {
+      webBody = body as ReadableStream;
+    } else {
+      webBody = Readable.toWeb(body as unknown as Readable) as ReadableStream;
+    }
 
     return {
       body: webBody,

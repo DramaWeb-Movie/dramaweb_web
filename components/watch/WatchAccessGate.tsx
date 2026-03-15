@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FiLock, FiPlay, FiLogIn } from 'react-icons/fi';
+import { FiLock, FiPlay } from 'react-icons/fi';
 import { usePaymentAccess } from '@/hooks/usePaymentAccess';
 import Button from '@/components/ui/Button';
 import { useTranslations } from 'next-intl';
@@ -51,35 +51,6 @@ export default function WatchAccessGate({
 
   if (!hasAccess) {
     const isMovie = contentType === 'movie';
-
-    if (isFreeEpisode && !isAuthenticated) {
-      return (
-        <div className="rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm flex flex-col items-center justify-center aspect-video px-6 text-center">
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
-            <FiLogIn className="text-green-600 text-2xl" />
-          </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">{t('signInToWatch')}</h2>
-          <p className="text-gray-500 text-sm max-w-md mb-4">
-            {t('freeEpisodeDesc', { ep: currentEp })}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
-            <Link
-              href={`/login?redirect=/drama/${contentId}/watch?ep=${currentEp}`}
-            >
-              <Button className="flex items-center gap-2" size="md">
-                <FiLogIn className="text-lg" /> {t('signInAndWatch')}
-              </Button>
-            </Link>
-            <Link
-              href={`/register?redirect=/drama/${contentId}/watch?ep=${currentEp}`}
-              className="text-sm text-[#E31837] hover:underline"
-            >
-              {t('createAccount')}
-            </Link>
-          </div>
-        </div>
-      );
-    }
 
     return (
       <div className="rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm flex flex-col items-center justify-center aspect-video px-6 text-center">

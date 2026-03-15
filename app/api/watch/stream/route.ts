@@ -53,13 +53,11 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Free movie: no auth required
-  if (contentType === 'movie' && isFreeMovie) {
+  // Free movie or free episode: no auth required — anyone can watch
+  if ((contentType === 'movie' && isFreeMovie) || (contentType === 'series' && isFreeEpisode)) {
     // allow
   } else if (!user) {
     return new Response('Unauthorized', { status: 401 });
-  } else if (contentType === 'series' && isFreeEpisode) {
-    // free episode, user is logged in
   } else if (contentType === 'series') {
     const { data: sub } = await supabase
       .from('subscriptions')

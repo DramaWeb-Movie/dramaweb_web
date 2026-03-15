@@ -18,7 +18,7 @@ interface AccessStatus {
  *
  * - movie (free): no login required, everyone can watch
  * - movie (paid): requires individual purchase
- * - series (free episode): requires authentication only (isFreeEpisode = true)
+ * - series (free episode): no login required, everyone can watch
  * - series (paid episode): requires active subscription
  */
 export function usePaymentAccess(
@@ -51,6 +51,17 @@ export function usePaymentAccess(
         return;
       }
 
+      // Free episode — no login required, anyone can watch
+      if (contentType === 'series' && isFreeEpisode) {
+        setStatus({
+          hasAccess: true,
+          loading: false,
+          isAuthenticated: false,
+          subscriptionActive: false,
+        });
+        return;
+      }
+
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -59,17 +70,6 @@ export function usePaymentAccess(
           hasAccess: false,
           loading: false,
           isAuthenticated: false,
-          subscriptionActive: false,
-        });
-        return;
-      }
-
-      // Free episode — only requires being logged in
-      if (contentType === 'series' && isFreeEpisode) {
-        setStatus({
-          hasAccess: true,
-          loading: false,
-          isAuthenticated: true,
           subscriptionActive: false,
         });
         return;
